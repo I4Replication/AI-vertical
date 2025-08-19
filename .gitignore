@@ -1,0 +1,41 @@
+# R history
+.Rhistory
+.Rapp.history
+
+# R session data
+.RData
+.RData.user
+.Ruserdata
+
+# RStudio project/user files
+.Rproj.user/
+*.Rproj
+
+# Build/check outputs
+*.tar.gz
+*.Rcheck/
+
+# Vignettes and docs
+vignettes/*.html
+vignettes/*.pdf
+docs/
+
+# httr OAuth tokens
+.httr-oauth
+
+# knitr / rmarkdown caches
+*_cache/
+cache/
+
+# Temporary knitr outputs
+*.utf8.md
+*.knit.md
+
+# Environment variables
+.Renviron
+
+# Shiny deployment tokens
+rsconnect/
+
+# macOS
+.DS_Store
