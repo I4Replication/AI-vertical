@@ -1,0 +1,30 @@
+# Configuration for AI vertical synthetic pipeline
+seed: 1234
+n_teams: 60
+individuals_per_team_min: 3
+individuals_per_team_max: 6
+branches: ["Human-Only", "AI-Assisted", "AI-Led"]
+softwares: ["Stata", "R"]
+attendance: ["Virtual", "In-Person"]
+skills: ["Student", "Researcher", "Postdoc", "Professor"]
+gpt_levels: ["Never", "Beginner", "Intermediate", "Advanced"]
+coding_levels: ["Novice", "Advanced Beginner", "Competent", "Proficient", "Expert"]
+games:
+  - Toronto
+  - Ottawa
+  - Sheffield
+  - Cornell
+  - Bogota
+  - Tilburg
+  - Virtual
+  - Virtual 2025
+prompts_intensity_mean: 8
+prompts_intensity_sd: 3
+error_minor_rate: 0.4
+error_major_rate: 0.2
+reproduction_base_prob: 0.45
+reproduction_ai_assisted_bonus: 0.10
+reproduction_ai_led_penalty: -0.10
+# time in minutes since a 9:00 base, approximate
+start_time_mean: 35
+start_time_sd: 15

@@ -1,0 +1,2 @@
+Sample synthetic text corpus for NLP tests.
+This is a small sample.

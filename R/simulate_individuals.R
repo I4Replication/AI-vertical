@@ -1,0 +1,109 @@
+# Synthetic individual-level generator for AI vertical
+suppressPackageStartupMessages({
+  library(dplyr); library(tidyr); library(stringr); library(lubridate)
+  library(purrr); library(readr); library(yaml)
+})
+
+sim_read_config <- function(){
+  cfg_path <- here::here("config","config.yml")
+  yaml::read_yaml(cfg_path)
+}
+
+sim_individuals <- function(cfg){
+  set.seed(cfg$seed %||% 1234)
+  games <- cfg$games
+  branches <- cfg$branches
+  softwares <- cfg$softwares
+  attendance <- cfg$attendance
+  skills <- cfg$skills
+  gpt_levels <- cfg$gpt_levels
+  coding_levels <- cfg$coding_levels
+
+  teams <- tibble(
+    team_id = seq_len(cfg$n_teams),
+    game = factor(sample(games, cfg$n_teams, replace = TRUE), levels = games),
+    branch = factor(sample(branches, cfg$n_teams, replace = TRUE), levels = branches),
+    software = factor(sample(softwares, cfg$n_teams, replace = TRUE), levels = softwares),
+    attendance = factor(sample(attendance, cfg$n_teams, replace = TRUE), levels = attendance),
+    number_teammates = sample(cfg$individuals_per_team_min:cfg$individuals_per_team_max, cfg$n_teams, replace = TRUE),
+    max_skill = factor(sample(skills, cfg$n_teams, replace = TRUE), levels = skills),
+    min_skill = factor(sample(skills, cfg$n_teams, replace = TRUE), levels = skills)
+  ) |> mutate(
+    game2 = game
+  )
+
+  # expand to individuals
+  indiv <- teams |> 
+    rowwise() |> 
+    mutate(indiv_ids = list(seq_len(number_teammates))) |> 
+    unnest(indiv_ids) |> 
+    ungroup() |> 
+    transmute(
+      team_id, game, game2, branch, software, attendance,
+      number_teammates,
+      max_skill, min_skill,
+      indiv_id = paste(team_id, indiv_ids, sep = "_"),
+      max_gpt = factor(sample(gpt_levels, 1), levels = gpt_levels),
+      min_gpt = factor(sample(gpt_levels, 1), levels = gpt_levels),
+      max_coding = factor(sample(coding_levels, 1), levels = coding_levels),
+      min_coding = factor(sample(coding_levels, 1), levels = coding_levels)
+    )
+
+  # prompts/files/images/words at individual level (Poisson-ish)
+  lam <- pmax(0.1, rnorm(nrow(indiv), cfg$prompts_intensity_mean, cfg$prompts_intensity_sd))
+  indiv <- indiv |> mutate(
+    prompts_i = rpois(n(), lam),
+    files_i   = rpois(n(), lam/4),
+    images_i  = rpois(n(), lam/6),
+    words_i   = rpois(n(), lam*20)
+  )
+
+  # error generation and reproduction probability per individual
+  indiv <- indiv |> mutate(
+    p_rep = pmin(0.98, pmax(0.02, cfg$reproduction_base_prob +
+      ifelse(branch=="AI-Assisted", cfg$reproduction_ai_assisted_bonus,
+             ifelse(branch=="AI-Led", cfg$reproduction_ai_led_penalty, 0)) +
+      rnorm(n(), 0, 0.1))),
+    reproduction_i = rbinom(n(), 1, p_rep),
+    minor_errors_i = rpois(n(), lambda = cfg$error_minor_rate * (1 + (branch=="AI-Led")*0.2)),
+    major_errors_i = rpois(n(), lambda = cfg$error_major_rate * (1 + (branch=="AI-Led")*0.2))
+  )
+
+  # approximate times since 9:00 base
+  base_time <- as.POSIXct("1899-12-31 09:00:00", tz = "UTC")
+  indiv <- indiv |> mutate(
+    time2_reproduction_i = ifelse(reproduction_i==1, pmax(1, rnorm(n(), cfg$start_time_mean, cfg$start_time_sd)), NA),
+    time2_first_minor_i  = ifelse(minor_errors_i>0, pmax(1, rnorm(n(), cfg$start_time_mean, cfg$start_time_sd)), NA),
+    time2_first_major_i  = ifelse(major_errors_i>0, pmax(1, rnorm(n(), cfg$start_time_mean, cfg$start_time_sd)), NA)
+  )
+
+  indiv
+}
+
+# Aggregate individuals -> team-level main like AI paper
+aggregate_to_team <- function(indiv){
+  indiv |> group_by(team_id, game, game2, branch, software, attendance, number_teammates, max_skill, min_skill) |> 
+    summarise(
+      reproduction = mean(reproduction_i, na.rm = TRUE),
+      time2_reproduction = suppressWarnings(min(time2_reproduction_i, na.rm = TRUE)),
+      minor_errors = sum(minor_errors_i, na.rm = TRUE),
+      time2_first_minor = suppressWarnings(min(time2_first_minor_i, na.rm = TRUE)),
+      major_errors = sum(major_errors_i, na.rm = TRUE),
+      time2_first_major = suppressWarnings(min(time2_first_major_i, na.rm = TRUE)),
+      prompts = sum(prompts_i, na.rm = TRUE),
+      files   = sum(files_i,   na.rm = TRUE),
+      images  = sum(images_i,  na.rm = TRUE),
+      words   = sum(words_i,   na.rm = TRUE),
+      .groups = "drop"
+    ) |> mutate(
+      time2_reproduction = ifelse(is.infinite(time2_reproduction), NA, time2_reproduction),
+      time2_first_minor  = ifelse(is.infinite(time2_first_minor), NA, time2_first_minor),
+      time2_first_major  = ifelse(is.infinite(time2_first_major), NA, time2_first_major)
+    )
+}
+
+# Save main dataset (team-level)
+sim_save_main <- function(main_df){
+  dir.create(here::here("data"), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(main_df, file = here::here("data","AI games.rds"))
+}
