@@ -18,41 +18,22 @@ dir.create(here::here("output"), showWarnings = FALSE, recursive = TRUE)
 sink(log_file, split = TRUE)
 cat("=== MASTER LOG START (vertical) ===\n")
 
-# 1. Cleaning (simulate + aggregate)
-cat("\n--- Cleaning / simulate synthetic data ---\n")
+# 1. Cleaning (simulate individuals)
+cat("\n--- Cleaning / simulate synthetic data (individual-level) ---\n")
 source(here::here("code","R code","cleaning.R"))
 rm(list = ls())
 
-# 2. Figures: prompt distribution, reproduction and errors
-cat("\n--- Figures: Reproduction rates ---\n")
-source(here::here("code","R code","reproduction rates.R"))
-rm(list = ls())
-
-cat("\n--- Figures: Prompt distribution ---\n")
+# 2. Individual-level figures
+cat("\n--- Figures: Prompt usage distributions (AI arm) ---\n")
 source(here::here("code","R code","prompt distribution.R"))
 rm(list = ls())
 
-cat("\n--- Tables: Error shares ---\n")
-source(here::here("code","R code","error shares.R"))
-rm(list = ls())
-
-# New: time-to-first figures
-cat("\n--- Figures: Time to first events ---\n")
-source(here::here("code","R code","time to first.R"))
-rm(list = ls())
-
-# New: text-derived figures (wordcloud and markov-like heatmaps)
 cat("\n--- Figures: Text corpus visualizations ---\n")
 source(here::here("code","R code","text figures.R"))
 rm(list = ls())
 
-# New: synthetic tables to mirror reference outputs
-cat("\n--- Tables: Synthetic set to mirror reference ---\n")
-source(here::here("code","R code","tables_synthetic.R"))
-rm(list = ls())
-
-# New: PAP-compliant analyses (individual-level)
-cat("\n--- PAP analyses: main and secondary ---\n")
+# 3. PAP-compliant analyses (individual-level)
+cat("\n--- PAP analyses: main, secondary, appendix ---\n")
 source(here::here("code","R code","pap_analyses.R"))
 rm(list = ls())
 

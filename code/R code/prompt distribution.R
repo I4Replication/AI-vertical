@@ -1,23 +1,21 @@
 ############################################################
-# Density plots – Stata-style kernel estimates in R      
+# Density plots – individual-level (AI arm)
 ############################################################
 # ---- 1. Read data ----
-main <- readRDS("data/AI games.rds")
-main <- main %>% filter(branch == "AI-Assisted")
+ind <- readRDS("data/AI individuals.rds")
+ind <- ind %>% filter(treatment == 1)
 
 # ---- 2. Variables for which we want densities ----
-vars <- c("prompts", "files", "images", "words")
+vars <- c("prompts_i", "files_i", "images_i", "words_i")
+labels <- c(prompts_i = "prompts", files_i = "files", images_i = "images", words_i = "words")
 
 # ---- 3. Make one ggplot2 density plot per variable ----
 density_plots <- lapply(
   vars,
   function(v) {
-    ggplot(main, aes(x = .data[[v]])) +
-      geom_density(na.rm = TRUE, adjust = 1) +     # ‘adjust’ is like Stata’s bandwidth scalar
-      labs(
-        x = v,
-        y = "Density"
-      ) +
+    ggplot(ind, aes(x = .data[[v]])) +
+      geom_density(na.rm = TRUE, adjust = 1) +
+      labs(x = labels[[v]], y = "Density") +
       theme_minimal(base_size = 13)
   }
 )

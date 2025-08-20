@@ -1,19 +1,11 @@
 === MASTER LOG START (vertical) ===
 
---- Cleaning / simulate synthetic data ---
+--- Cleaning / simulate synthetic data (individual-level) ---
 
---- Figures: Reproduction rates ---
-
---- Figures: Prompt distribution ---
-
---- Tables: Error shares ---
-
---- Figures: Time to first events ---
+--- Figures: Prompt usage distributions (AI arm) ---
 
 --- Figures: Text corpus visualizations ---
 
---- Tables: Synthetic set to mirror reference ---
-
---- PAP analyses: main and secondary ---
+--- PAP analyses: main, secondary, appendix ---
 
 === MASTER LOG END ===
