@@ -36,5 +36,20 @@ cat("\n--- Tables: Error shares ---\n")
 source(here::here("code","R code","error shares.R"))
 rm(list = ls())
 
+# New: time-to-first figures
+cat("\n--- Figures: Time to first events ---\n")
+source(here::here("code","R code","time to first.R"))
+rm(list = ls())
+
+# New: text-derived figures (wordcloud and markov-like heatmaps)
+cat("\n--- Figures: Text corpus visualizations ---\n")
+source(here::here("code","R code","text figures.R"))
+rm(list = ls())
+
+# New: synthetic tables to mirror reference outputs
+cat("\n--- Tables: Synthetic set to mirror reference ---\n")
+source(here::here("code","R code","tables_synthetic.R"))
+rm(list = ls())
+
 cat("\n=== MASTER LOG END ===\n")
 sink()
