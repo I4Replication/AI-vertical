@@ -1,0 +1,48 @@
+\begin{table}
+\centering
+\begin{tblr}[         %% tabularray outer open
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]},
+column{2}={}{halign=c,},
+column{1}={}{halign=l,},
+hline{28}={1,2}{solid, black, 0.05em},
+}                     %% tabularray inner close
+\toprule
+& P \\ \midrule %% TinyTableHeader
+(Intercept) & \num{81.096} \\
+& (\num{89.879}) \\
+log1p(prompts\_i) & \num{-17.273} \\
+& (\num{50.064}) \\
+log1p(files\_i) & \num{30.707} \\
+& (\num{21.518}) \\
+log1p(images\_i) & \num{4.965} \\
+& (\num{24.917}) \\
+log1p(words\_i) & \num{8.778} \\
+& (\num{42.104}) \\
+years\_coding & \num{7.118} \\
+& (\num{2.839}) \\
+event = Ottawa & \num{19.346} \\
+& (\num{17.397}) \\
+event = Sheffield & \num{43.748} \\
+& (\num{14.094}) \\
+event = Cornell & \num{32.517} \\
+& (\num{13.290}) \\
+event = Bogota & \num{34.806} \\
+& (\num{15.618}) \\
+event = Tilburg & \num{10.639} \\
+& (\num{11.427}) \\
+event = Virtual & \num{10.480} \\
+& (\num{12.101}) \\
+event = Virtual 2025 & \num{50.469} \\
+& (\num{19.543}) \\
+Num.Obs. & \num{261} \\
+R2 & \num{0.013} \\
+R2 Adj. & \num{-0.035} \\
+AIC & \num{3516.8} \\
+BIC & \num{3563.1} \\
+RMSE & \num{194.11} \\
+Std.Errors & by: cluster\_es \\
+\bottomrule
+\end{tblr}
+\end{table}

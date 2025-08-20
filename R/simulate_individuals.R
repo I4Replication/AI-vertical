@@ -19,6 +19,9 @@ sim_individuals <- function(cfg){
   gpt_levels <- cfg$gpt_levels
   coding_levels <- cfg$coding_levels
 
+  # PAP tiers (expertise ladder)
+  tiers <- c("UG","MA","PhD","PD","P")
+
   teams <- tibble(
     team_id = seq_len(cfg$n_teams),
     game = factor(sample(games, cfg$n_teams, replace = TRUE), levels = games),
@@ -43,6 +46,20 @@ sim_individuals <- function(cfg){
       number_teammates,
       max_skill, min_skill,
       indiv_id = paste(team_id, indiv_ids, sep = "_"),
+      # simple article assignment per event (3 per event)
+      article = factor(paste0(as.character(game), "_A", sample(1:3, 1))),
+      # PAP: expertise tiers (random across individuals)
+      tier = factor(sample(tiers, 1), levels = tiers),
+      years_coding = pmax(0,
+        ifelse(tier=="UG", rnorm(1, 2, 1),
+        ifelse(tier=="MA", rnorm(1, 3.5, 1.5),
+        ifelse(tier=="PhD", rnorm(1, 5, 2),
+        ifelse(tier=="PD", rnorm(1, 6, 2), rnorm(1, 8, 3))))
+      )),
+      preferred_software = factor(sample(c("R","Stata","Python"), 1), levels = c("R","Stata","Python")),
+      prior_gpt_familiarity = factor(sample(c("None","Some","Heavy"), 1), levels = c("None","Some","Heavy")),
+      # PAP: treatment assignment 1:1 within tier (approximate at team expansion stage)
+      treatment = rbinom(1, 1, 0.5),
       max_gpt = factor(sample(gpt_levels, 1), levels = gpt_levels),
       min_gpt = factor(sample(gpt_levels, 1), levels = gpt_levels),
       max_coding = factor(sample(coding_levels, 1), levels = coding_levels),
@@ -58,23 +75,51 @@ sim_individuals <- function(cfg){
     words_i   = rpois(n(), lam*20)
   )
 
-  # error generation and reproduction probability per individual
+  # PAP: outcome generation with treatment x tier compression
+  # Baseline UG control mean and tier deltas
+  base_rep_ug <- cfg$pap_base_rep_ug %||% 0.40
+  tier_delta <- case_when(
+    indiv$tier=="MA" ~ 0.03,
+    indiv$tier=="PhD" ~ 0.07,
+    indiv$tier=="PD" ~ 0.10,
+    indiv$tier=="P" ~ 0.15,
+    TRUE ~ 0
+  )
+  # Treatment main effect at UG and compression (negative interactions for higher tiers)
+  trt_main <- cfg$pap_trt_main_ug %||% 0.06
+  comp_rate <- cfg$pap_compression_rate %||% 0.40
+  # Probability under control for each tier
+  p0 <- pmin(0.98, pmax(0.02, base_rep_ug + tier_delta))
+  # Treatment effect by tier: UG gets trt_main; higher tiers get reduced by compression*delta
+  d_tier <- trt_main - comp_rate * pmax(0, tier_delta)
+  p1 <- pmin(0.98, pmax(0.02, p0 + d_tier))
+  p_rep <- ifelse(indiv$treatment==1, p1, p0)
+  # Prior familiarity and prompts nudge
+  p_rep <- p_rep + 0.01*(indiv$prior_gpt_familiarity=="Heavy") + 0.0005*indiv$prompts_i
+  p_rep <- pmin(0.98, pmax(0.02, p_rep + rnorm(nrow(indiv), 0, 0.05)))
+
   indiv <- indiv |> mutate(
-    p_rep = pmin(0.98, pmax(0.02, cfg$reproduction_base_prob +
-      ifelse(branch=="AI-Assisted", cfg$reproduction_ai_assisted_bonus,
-             ifelse(branch=="AI-Led", cfg$reproduction_ai_led_penalty, 0)) +
-      rnorm(n(), 0, 0.1))),
     reproduction_i = rbinom(n(), 1, p_rep),
-    minor_errors_i = rpois(n(), lambda = cfg$error_minor_rate * (1 + (branch=="AI-Led")*0.2)),
-    major_errors_i = rpois(n(), lambda = cfg$error_major_rate * (1 + (branch=="AI-Led")*0.2))
+    minor_errors_i = rpois(n(), lambda = cfg$error_minor_rate * (1 + (tier %in% c("UG","MA"))*0.1)),
+    major_errors_i = rpois(n(), lambda = cfg$error_major_rate * (1 + (tier %in% c("UG"))*0.1))
+  )
+
+  # Robustness checks and clarity
+  indiv <- indiv |> mutate(
+    good_checks_i = rbinom(n(), 1, plogis(-1 + 0.4*(treatment==1) + 0.05*years_coding)),
+    two_good_checks_i = rbinom(n(), 1, plogis(-2 + 0.3*(treatment==1) + 0.05*years_coding)),
+    ran_any_check_i = rbinom(n(), 1, plogis(-0.5 + 0.3*(treatment==1) + 0.03*years_coding)),
+    clarity_score_i = pmin(5, pmax(0, rnorm(n(), 3 + 0.2*(treatment==1) + 0.05*log1p(years_coding), 0.8)))
   )
 
   # approximate times since 9:00 base
   base_time <- as.POSIXct("1899-12-31 09:00:00", tz = "UTC")
   indiv <- indiv |> mutate(
-    time2_reproduction_i = ifelse(reproduction_i==1, pmax(1, rnorm(n(), cfg$start_time_mean, cfg$start_time_sd)), NA),
-    time2_first_minor_i  = ifelse(minor_errors_i>0, pmax(1, rnorm(n(), cfg$start_time_mean, cfg$start_time_sd)), NA),
-    time2_first_major_i  = ifelse(major_errors_i>0, pmax(1, rnorm(n(), cfg$start_time_mean, cfg$start_time_sd)), NA)
+    time2_reproduction_i = ifelse(reproduction_i==1, pmax(1, rnorm(n(), cfg$start_time_mean - 8*(treatment==1), cfg$start_time_sd)), NA),
+    time2_first_minor_i  = ifelse(minor_errors_i>0, pmax(1, rnorm(n(), cfg$start_time_mean - 4*(treatment==1), cfg$start_time_sd)), NA),
+    time2_first_major_i  = ifelse(major_errors_i>0, pmax(1, rnorm(n(), cfg$start_time_mean - 4*(treatment==1), cfg$start_time_sd)), NA),
+    # Censor at 420 minutes for minutes-to-success as per PAP
+    minutes_to_success_i = pmin(420, ifelse(is.na(time2_reproduction_i), 420, time2_reproduction_i))
   )
 
   indiv
@@ -106,4 +151,10 @@ aggregate_to_team <- function(indiv){
 sim_save_main <- function(main_df){
   dir.create(here::here("data"), showWarnings = FALSE, recursive = TRUE)
   saveRDS(main_df, file = here::here("data","AI games.rds"))
+}
+
+# Save individual-level dataset for PAP analyses
+sim_save_indiv <- function(indiv_df){
+  dir.create(here::here("data"), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(indiv_df, file = here::here("data","AI individuals.rds"))
 }

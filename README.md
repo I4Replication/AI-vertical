@@ -171,3 +171,22 @@ These PNGs render directly in most viewers; PDF figures are in `output/figures`.
 ## Provenance & Difference from Reference
 - Reference project: “AI paper” uses survey team‑level data and includes Stata code.
 - This project: simulates individual‑level data and aggregates to team level to mirror outputs. All filenames and directory paths are kept identical for downstream compatibility.
+
+## PAP Outputs Index
+
+Main tables (PAP):
+- `output/tables/pap_main.tex`: OLS (success, minutes) and Poisson (minor/major) with FE and clustered SEs.
+- `output/tables/pap_secondary_years.tex`: Linear dose-response (years of coding × treatment).
+- `output/tables/pap_secondary_learning.tex`: Learning (treatment × event order).
+
+Secondary and appendix:
+- `output/tables/pap_secondary_usage_all.tex`: Within-AI usage regressions including prompts, files, images, words.
+- `output/tables/pap_usage_success_by_tier.tex`: Within-AI usage → success, separate models per tier.
+- `output/tables/pap_usage_minutes_by_tier.tex`: Within-AI usage → minutes, separate models per tier.
+- `output/tables/pap_robustness_clarity.tex`: Robustness and clarity outcomes (with FE).
+- `output/tables/pap_robustness_clarity_appendix.tex`: Robustness and clarity (no FE) specification check.
+- `output/tables/pap_robustness_clarity_both.tex`: Combined table with FE and no-FE columns side-by-side.
+- `output/tables/pap_secondary_years_alt.tex`: Years of coding with quadratic term (appendix).
+
+Figures (PAP):
+- `output/figures/pap_km_success.pdf`: Kaplan–Meier survival by treatment (minutes to success).

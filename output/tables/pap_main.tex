@@ -1,0 +1,40 @@
+\begin{table}
+\centering
+\begin{tblr}[         %% tabularray outer open
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]Q[]},
+column{2,3,4,5}={}{halign=c,},
+column{1}={}{halign=l,},
+hline{20}={1,2,3,4,5}{solid, black, 0.05em},
+}                     %% tabularray inner close
+\toprule
+& Success (OLS) & Minutes (OLS) & Minor errors (Poisson) & Major errors (Poisson) \\ \midrule %% TinyTableHeader
+(Intercept) & \num{0.583} & \num{100.320} & \num{-1.179} & \num{-2.565} \\
+& (\num{0.018}) & (\num{9.451}) & (\num{0.000}) & (\num{0.000}) \\
+years\_coding & \num{0.002} & \num{7.246} &  &  \\
+& (\num{0.000}) & (\num{0.121}) &  &  \\
+event = Ottawa & \num{-0.053} & \num{22.607} & \num{-0.090} & \num{1.296} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+event = Sheffield & \num{-0.115} & \num{46.624} & \num{0.566} & \num{0.996} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+event = Cornell & \num{-0.070} & \num{34.644} & \num{0.390} & \num{1.179} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+event = Bogota & \num{-0.094} & \num{41.575} & \num{0.123} & \num{1.221} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+event = Tilburg & \num{-0.024} & \num{13.080} & \num{0.177} & \num{0.870} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+event = Virtual & \num{-0.026} & \num{11.774} & \num{0.288} & \num{0.511} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+event = Virtual 2025 & \num{-0.129} & \num{53.821} & \num{0.340} & \num{1.352} \\
+& (\num{0.028}) & (\num{14.850}) & (\num{0.000}) & (\num{0.000}) \\
+Num.Obs. & \num{261} & \num{261} & \num{261} & \num{261} \\
+R2 & \num{0.005} & \num{0.005} & \num{0.008} & \num{0.018} \\
+R2 Adj. & \num{-0.026} & \num{-0.027} & \num{-0.025} & \num{-0.029} \\
+AIC & \num{392.6} & \num{3511.0} & \num{431.4} & \num{308.5} \\
+BIC & \num{424.7} & \num{3543.1} & \num{460.0} & \num{337.0} \\
+RMSE & \num{0.50} & \num{194.93} & \num{0.58} & \num{0.48} \\
+Std.Errors & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es \\
+\bottomrule
+\end{tblr}
+\end{table}

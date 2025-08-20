@@ -1,0 +1,26 @@
+\begin{table}
+\centering
+\begin{tblr}[         %% tabularray outer open
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]Q[]},
+column{2,3,4,5}={}{halign=c,},
+column{1}={}{halign=l,},
+hline{6}={1,2,3,4,5}{solid, black, 0.05em},
+}                     %% tabularray inner close
+\toprule
+& Good check (no FE) & >=2 good checks (no FE) & Ran any check (no FE) & Clarity score (no FE) \\ \midrule %% TinyTableHeader
+(Intercept) & \num{0.395} & \num{0.227} & \num{0.454} & \num{2.747} \\
+& (\num{0.020}) & (\num{0.019}) & (\num{0.026}) & (\num{0.064}) \\
+years\_coding & \num{0.009} & \num{0.003} & \num{0.006} & \num{0.053} \\
+& (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.001}) \\
+Num.Obs. & \num{261} & \num{261} & \num{261} & \num{261} \\
+R2 & \num{-0.000} & \num{-0.000} & \num{-0.000} & \num{-0.011} \\
+R2 Adj. & \num{-0.004} & \num{-0.004} & \num{-0.004} & \num{-0.015} \\
+AIC & \num{382.4} & \num{312.4} & \num{382.7} & \num{596.8} \\
+BIC & \num{389.6} & \num{319.5} & \num{389.9} & \num{603.9} \\
+RMSE & \num{0.50} & \num{0.44} & \num{0.50} & \num{0.75} \\
+Std.Errors & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es \\
+\bottomrule
+\end{tblr}
+\end{table}

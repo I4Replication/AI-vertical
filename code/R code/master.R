@@ -51,5 +51,10 @@ cat("\n--- Tables: Synthetic set to mirror reference ---\n")
 source(here::here("code","R code","tables_synthetic.R"))
 rm(list = ls())
 
+# New: PAP-compliant analyses (individual-level)
+cat("\n--- PAP analyses: main and secondary ---\n")
+source(here::here("code","R code","pap_analyses.R"))
+rm(list = ls())
+
 cat("\n=== MASTER LOG END ===\n")
 sink()

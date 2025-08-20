@@ -21,5 +21,6 @@ main <- main %>% mutate(
   min_coding = factor(NA, levels = cfg$coding_levels)
 )
 
-# Save dataset for subsequent scripts
+# Save datasets for subsequent scripts
 sim_save_main(main)
+sim_save_indiv(indiv)

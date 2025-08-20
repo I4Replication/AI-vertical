@@ -1,0 +1,40 @@
+\begin{table}
+\centering
+\begin{tblr}[         %% tabularray outer open
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]},
+column{2}={}{halign=c,},
+column{1}={}{halign=l,},
+hline{20}={1,2}{solid, black, 0.05em},
+}                     %% tabularray inner close
+\toprule
+& Success \textasciitilde{} trt x order \\ \midrule %% TinyTableHeader
+(Intercept) & \num{0.448} \\
+& (\num{0.013}) \\
+event\_order & \num{0.026} \\
+& (\num{0.003}) \\
+years\_coding & \num{-0.003} \\
+& (\num{0.000}) \\
+event = Ottawa & \num{0.050} \\
+& (\num{0.014}) \\
+event = Sheffield & \num{-0.141} \\
+& (\num{0.017}) \\
+event = Cornell & \num{0.085} \\
+& (\num{0.017}) \\
+event = Bogota & \num{-0.042} \\
+& (\num{0.013}) \\
+event = Tilburg & \num{0.054} \\
+& (\num{0.013}) \\
+event = Virtual & \num{0.000} \\
+& (\num{0.014}) \\
+Num.Obs. & \num{261} \\
+R2 & \num{0.006} \\
+R2 Adj. & \num{-0.025} \\
+AIC & \num{392.4} \\
+BIC & \num{424.5} \\
+RMSE & \num{0.50} \\
+Std.Errors & by: cluster\_es \\
+\bottomrule
+\end{tblr}
+\end{table}
