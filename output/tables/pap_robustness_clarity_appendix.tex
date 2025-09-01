@@ -1,26 +1,54 @@
-\begin{table}
-\centering
-\begin{tblr}[         %% tabularray outer open
-]                     %% tabularray outer close
-{                     %% tabularray inner open
-colspec={Q[]Q[]Q[]Q[]Q[]},
-column{2,3,4,5}={}{halign=c,},
-column{1}={}{halign=l,},
-hline{6}={1,2,3,4,5}{solid, black, 0.05em},
-}                     %% tabularray inner close
-\toprule
-& Good check (no FE) & >=2 good checks (no FE) & Ran any check (no FE) & Clarity score (no FE) \\ \midrule %% TinyTableHeader
-(Intercept) & \num{0.395} & \num{0.227} & \num{0.454} & \num{2.747} \\
-& (\num{0.020}) & (\num{0.019}) & (\num{0.026}) & (\num{0.064}) \\
-years\_coding & \num{0.009} & \num{0.003} & \num{0.006} & \num{0.053} \\
-& (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.001}) \\
-Num.Obs. & \num{261} & \num{261} & \num{261} & \num{261} \\
-R2 & \num{-0.000} & \num{-0.000} & \num{-0.000} & \num{-0.011} \\
-R2 Adj. & \num{-0.004} & \num{-0.004} & \num{-0.004} & \num{-0.015} \\
-AIC & \num{382.4} & \num{312.4} & \num{382.7} & \num{596.8} \\
-BIC & \num{389.6} & \num{319.5} & \num{389.9} & \num{603.9} \\
-RMSE & \num{0.50} & \num{0.44} & \num{0.50} & \num{0.75} \\
-Std.Errors & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es \\
-\bottomrule
-\end{tblr}
-\end{table}
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{2}{c}}
+\hline\hline
+ & (1) & (2)
+\\
+ & At least 1 check & At least 2 checks
+ \\
+\hline
+AI-Assisted & -0.073 &  0.104
+\\
+ & ( 0.086) & ( 0.088)
+\\
+ & [-0.251;  0.104] & [-0.078;  0.285]
+\\
+AI × Master's &  0.402** &  0.012
+\\
+ & ( 0.189) & ( 0.180)
+\\
+ & [ 0.011;  0.794] & [-0.360;  0.384]
+\\
+AI × PhD &  0.388** & -0.109
+\\
+ & ( 0.158) & ( 0.133)
+\\
+ & [ 0.061;  0.715] & [-0.385;  0.166]
+\\
+AI × Postdoc &  0.157 &  0.051
+\\
+ & ( 0.175) & ( 0.135)
+\\
+ & [-0.206;  0.520] & [-0.229;  0.332]
+\\
+AI × Professor &  0.238 & -0.115
+\\
+ & ( 0.156) & ( 0.150)
+\\
+ & [-0.085;  0.561] & [-0.425;  0.195]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.410 &  0.157
+\\
+p-val (Monotonic compression) &  0.690 &  0.886
+\\
+Obs. & 261 & 261
+\\
+\hline
+\hline\hline
+\multicolumn{3}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{3}{l}{Controls: No event/article FE; years of coding; software; prior AI familiarity.}\\
+\multicolumn{3}{l}{Compression (monotonic): one-sided p-value for increasing effects across tiers (baseline: Undergraduate).}\\
+\multicolumn{3}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

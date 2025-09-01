@@ -1,0 +1,755 @@
+---
+title: "Reproducing with AI Across the Expertise Ladder"
+author: "\\begin{minipage}{0.9\\textwidth}\\centering \\small Ghina Abdul Baki, Juan P. Aparicio, Bruno Barbarioli, Abel Brodeur,\\\\ Lenka Fiala, Derek Mikola, David Valenta \\end{minipage}"
+date: "`r format(Sys.Date())`"
+output:
+  pdf_document:
+    toc: false
+    number_sections: true
+    fig_caption: true
+    latex_engine: xelatex
+bibliography: references.bib
+link-citations: true
+fontsize: 11pt
+geometry: margin=1in
+header-includes:
+  - \usepackage{adjustbox}
+  - \usepackage{float}
+  - \usepackage{placeins}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = 'center',
+  fig.width = 7,
+  fig.height = 4.5
+)
+
+# helper to sanitize figure paths (avoid spaces/parentheses issues in LaTeX)
+sanitize_name <- function(x) {
+  x <- gsub("[ ()]", "_", x)
+  gsub("__+", "_", x)
+}
+ensure_sanitized_figures <- function(files) {
+  dir.create('output/figures_sanitized', showWarnings = FALSE, recursive = TRUE)
+  src <- file.path('output/figures', files)
+  dst <- file.path('output/figures_sanitized', sanitize_name(files))
+  ok <- file.exists(src)
+  if (any(!ok)) warning('Missing figures: ', paste(files[!ok], collapse=', '))
+  for (i in which(ok)) {
+    if (!file.exists(dst[i]) || file.mtime(src[i]) > file.mtime(dst[i])) {
+      invisible(file.copy(src[i], dst[i], overwrite = TRUE))
+    }
+  }
+  dst[ok]
+}
+
+# helper to inject LaTeX caption/label into external .tex tables
+emit_table_with_caption <- function(tex_path, caption, label) {
+  x <- readLines(tex_path, warn = FALSE)
+  has_table <- any(grepl(r"(^\\begin\{table\})", x))
+  if (!has_table) {
+    # Wrap raw tabular/tblr into a floating table with caption/label and scaling
+    j_start <- which(grepl(r"(^\\begin\{tblr\})", x))[1]
+    j_end   <- which(grepl(r"(^\\end\{tblr\})", x))[1]
+    if (is.na(j_start) || is.na(j_end)) {
+      j_start <- which(grepl(r"(^\\begin\{tabular\})", x))[1]
+      j_end   <- which(grepl(r"(^\\end\{tabular\})", x))[1]
+    }
+    if (is.na(j_start) || is.na(j_end)) stop('Expected a tabular or tblr in ', tex_path)
+    pre  <- if (j_start > 1) x[seq_len(j_start-1)] else character(0)
+    mid  <- x[j_start:j_end]
+    post <- if (j_end < length(x)) x[(j_end+1):length(x)] else character(0)
+    y <- c(
+      "\\begin{table}[H]",
+      "\\centering",
+      "\\begingroup\\scriptsize",
+      paste0("\\caption{", caption, "}\\label{", label, "}"),
+      "\\begin{adjustbox}{width=\\textwidth,totalheight=0.8\\textheight,keepaspectratio}",
+      pre,
+      mid,
+      post,
+      "\\end{adjustbox}",
+      "\\endgroup",
+      "\\end{table}"
+    )
+    cat(y, sep='\n')
+    return(invisible(NULL))
+  }
+  # Strengthen float placement and add caption/label
+  i_tbl <- which(grepl(r"(^\\begin\{table\})", x))[1]
+  if (!is.na(i_tbl)) x[i_tbl] <- "\\begin{table}[H]"
+  has_caption <- any(grepl(r"(^\\caption)", x))
+  if (!has_caption) {
+    ins <- paste0('\\caption{', caption, '}\\label{', label, '}')
+    x <- append(x, values = ins, after = i_tbl)
+  }
+  # Add small font group after centering if present
+  i_ctr <- which(grepl(r"(^\\centering$)", x))[1]
+  if (!is.na(i_ctr)) x <- append(x, values = "\\begingroup\\scriptsize", after = i_ctr)
+  # Wrap inner table
+  j_start <- which(grepl(r"(^\\begin\{tblr\})", x))[1]
+  j_end   <- which(grepl(r"(^\\end\{tblr\})", x))[1]
+  if (is.na(j_start) || is.na(j_end)) {
+    j_start <- which(grepl(r"(^\\begin\{tabular\})", x))[1]
+    j_end   <- which(grepl(r"(^\\end\{tabular\})", x))[1]
+  }
+  if (!is.na(j_start) && !is.na(j_end) && j_end > j_start) {
+    x <- append(x, values = "\\begin{adjustbox}{width=\\textwidth,totalheight=0.8\\textheight,keepaspectratio}", after = j_start - 1)
+    j_end <- j_end + 1
+    x <- append(x, values = "\\end{adjustbox}", after = j_end)
+  }
+  i_end_tbl <- which(grepl(r"(^\\end\{table\})", x))[1]
+  if (!is.na(i_end_tbl)) x <- append(x, values = "\\endgroup", after = i_end_tbl - 1)
+  cat(x, sep='\n')
+}
+
+# AI-paper style table helpers for use inside this Rmd (classic tabular)
+suppressPackageStartupMessages({library(broom)})
+fmt3 <- function(x) { if (is.na(x) || is.null(x)) return(""); sprintf("% .3f", x) }
+star_sym <- function(p) { if (is.na(p)) return(""); if (p < 0.01) "***" else if (p < 0.05) "**" else if (p < 0.10) "*" else "" }
+coef_stats <- function(m, term) {
+  tt <- tryCatch(broom::tidy(m, conf.int = TRUE), error = function(e) NULL)
+  if (is.null(tt)) return(list(est=NA,se=NA,p=NA,lwr=NA,upr=NA))
+  row <- tt[tt$term == term, , drop = FALSE]
+  if (nrow(row) == 0 && grepl(':', term, fixed = TRUE)) {
+    parts <- strsplit(term, ':', fixed = TRUE)[[1]]
+    term2 <- paste(rev(parts), collapse = ':')
+    row <- tt[tt$term == term2, , drop = FALSE]
+  }
+  if (nrow(row) == 0) return(list(est=NA,se=NA,p=NA,lwr=NA,upr=NA))
+  list(est = row$estimate[[1]], se = row$std.error[[1]], p = row$p.value[[1]], lwr = row$conf.low[[1]], upr = row$conf.high[[1]])
+}
+wald_compression_p <- function(m) {
+  tt <- tryCatch(broom::tidy(m), error = function(e) NULL)
+  if (is.null(tt)) return(NA_real_)
+  cand <- unique(c(tt$term[grepl('^treatment:tier', tt$term)], tt$term[grepl('^tier.*:treatment$', tt$term)]))
+  if (length(cand) <= 1) return(NA_real_)
+  base <- cand[[1]]; rest <- setdiff(cand, base)
+  R <- paste(base, '=', rest)
+  tryCatch({ fixest::wald(m, R)$p.value }, error = function(e) NA_real_)
+}
+write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','usage','learn','prompts'),
+                           controls_desc = 'Event & article FE; years of coding; software; prior AI familiarity.',
+                           dep_means = NULL) {
+  coef_mode <- match.arg(coef_mode)
+  K <- length(models); stopifnot(length(col_titles) == K)
+  dir.create(dirname(file), showWarnings = FALSE, recursive = TRUE)
+  if (coef_mode == 'tier') {
+    keep <- c('treatment','treatment:tierMA','treatment:tierPhD','treatment:tierPD','treatment:tierP')
+    labels <- c('AI-Assisted','AI × Master\'s','AI × PhD','AI × Postdoc','AI × Professor')
+  } else if (coef_mode == 'years') {
+    keep <- c('treatment','years_coding:treatment')
+    labels <- c('AI-Assisted','AI × Years of coding')
+  } else if (coef_mode == 'usage') {
+    keep <- c('log1p(prompts_i)','log1p(files_i)','log1p(images_i)','log1p(words_i)')
+    labels <- c('log(1+prompts)','log(1+files)','log(1+images)','log(1+words)')
+  } else if (coef_mode == 'learn') {
+    keep <- c('treatment','treatment:event_order')
+    labels <- c('AI-Assisted','AI × Event order')
+  } else if (coef_mode == 'prompts') {
+    keep <- c('log1p(prompts_i)')
+    labels <- c('log(1+prompts)')
+  }
+  lines <- c()
+  lines <- c(lines, '\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}')
+  lines <- c(lines, sprintf('\\begin{tabular}{l*{%d}{c}}', length(models)))
+  lines <- c(lines, '\\hline\\hline')
+  # Numbers first, then titles
+  lines <- c(lines, paste(c('', sprintf('(%d)', seq_len(K))), collapse=' & '), '\\\\')
+  lines <- c(lines, paste(c('', col_titles), collapse=' & '), ' \\\\')
+  lines <- c(lines, '\\hline')
+  for (i in seq_along(keep)) {
+    lab <- labels[[i]]
+    ests <- se_line <- ci_line <- character(K)
+    for (j in seq_len(K)) {
+      s <- coef_stats(models[[j]], keep[[i]])
+      ests[[j]] <- if (is.na(s$est)) '' else sprintf('%s%s', fmt3(s$est), star_sym(s$p))
+      se_line[[j]] <- if (is.na(s$se)) '' else sprintf('(%s)', fmt3(s$se))
+      ci_line[[j]] <- if (is.na(s$lwr) || is.na(s$upr)) '' else sprintf('[%s; %s]', fmt3(s$lwr), fmt3(s$upr))
+    }
+    lines <- c(lines, paste(c(lab, ests), collapse=' & '), '\\\\')
+    lines <- c(lines, paste(c('', se_line), collapse=' & '), '\\\\')
+    lines <- c(lines, paste(c('', ci_line), collapse=' & '), '\\\\')
+  }
+  lines <- c(lines, '\\hline')
+  ck <- rep('$\\checkmark$', K)
+  lines <- c(lines, paste(c('Controls', ck), collapse=' & '), '\\\\')
+  if (is.null(dep_means)) {
+    dep_means <- sapply(models, function(m) {
+      val <- tryCatch({as.numeric(fixest::fitstat(m, 'ymean')$value)}, error=function(e) NA_real_)
+      if (is.na(val)) val <- tryCatch({mean(m$fitted.values + residuals(m), na.rm=TRUE)}, error=function(e) NA_real_)
+      val
+    })
+  }
+  lines <- c(lines, paste(c('Mean of dep. var', sprintf('% .3f', dep_means)), collapse=' & '), '\\\\')
+  if (coef_mode == 'tier') {
+    # monotonic compression p-values (one-sided)
+    p_monotonic_tier <- function(m) {
+      b <- tryCatch(coef(m), error = function(e) NULL)
+      V <- tryCatch(vcov(m), error = function(e) NULL)
+      if (is.null(b) || is.null(V)) return(NA_real_)
+      find_idx <- function(name){
+        if (name %in% names(b)) return(which(names(b)==name))
+        parts <- strsplit(name, ':', fixed = TRUE)[[1]]
+        name2 <- paste(rev(parts), collapse=':')
+        if (name2 %in% names(b)) return(which(names(b)==name2))
+        return(NA_integer_)
+      }
+      idx_P   <- find_idx('treatment:tierP')
+      idx_PD  <- find_idx('treatment:tierPD')
+      idx_PhD <- find_idx('treatment:tierPhD')
+      idx_MA  <- find_idx('treatment:tierMA')
+      if (any(is.na(c(idx_P, idx_PD, idx_PhD, idx_MA)))) return(NA_real_)
+      mk_p <- function(i, j){
+        cvec <- rep(0, length(b)); cvec[i] <- -1; cvec[j] <- 1
+        est <- sum(cvec * b)
+        se <- sqrt(as.numeric(t(cvec) %*% V %*% cvec))
+        if (!is.finite(se) || se <= 0) return(NA_real_)
+        z <- est / se
+        1 - pnorm(z)
+      }
+      p1 <- mk_p(idx_P, idx_PD); p2 <- mk_p(idx_PD, idx_PhD); p3 <- mk_p(idx_PhD, idx_MA)
+      if (any(is.na(c(p1,p2,p3)))) return(NA_real_)
+      max(p1,p2,p3)
+    }
+    pvals <- sapply(models, function(m) fmt3(tryCatch(p_monotonic_tier(m), error=function(e) NA_real_)))
+    lines <- c(lines, paste(c('p-val (Monotonic compression)', pvals), collapse=' & '), '\\\\')
+  }
+  lines <- c(lines, paste(c('Obs.', sapply(models, nobs)), collapse=' & '), '\\\\')
+  lines <- c(lines, '\\hline', '\\hline\\hline')
+  ctrl_txt <- gsub('&', '\\&', controls_desc, fixed = TRUE)
+  lines <- c(lines,
+             paste0('\\multicolumn{', K+1, '}{l}{\\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\\\'),
+             paste0('\\multicolumn{', K+1, '}{l}{Controls: ', ctrl_txt, '}\\\\'))
+  if (coef_mode == 'tier') {
+    lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{Compression (monotonic): one-sided p-value for increasing effects across tiers (baseline: Undergraduate).}\\\\'))
+  }
+  lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{\\sym{*} $p<0.10$, \\sym{**} $p<0.05$,  \\sym{***} $p<0.01$}\\\\'))
+  lines <- c(lines, '\\end{tabular}')
+  writeLines(lines, con = file)
+}
+```
+
+# Abstract
+
+We will test whether providing large-language-model (LLM) assistance compresses performance gaps across the expertise ladder in computational reproduction tasks. Individuals stratified by expertise (faculty, postdoc/researchers, PhD, master’s, undergraduate) are randomized to AI access (ChatGPT Plus with tools) versus human-only controls. Primary outcomes are: (i) successful reproduction of pre-specified results, (ii) time to first success, and (iii) detection of coding errors (major, minor). We pre-specify outcomes, covariates, identification and estimation strategies, heterogeneity, multiplicity control, and robustness. The design aims to identify whether AI is an equalizer (larger gains among lower tiers) or an amplifier (larger gains among higher tiers).
+
+# Registration and Funding
+
+This pre-analysis plan will be preregistered on OSF at: OSF prereg link (placeholder). Funded by Open Philanthropy and the Institute for Replication (I4R). Code and replication materials will be mirrored on GitHub upon registration.
+
+# Background and Rationale
+
+Prior multi-site “AI Replication Games” documented sizable effects of AI assistance on success and speed in reproduction tasks. Building on that foundation, this study turns to the vertical dimension of expertise to assess distributional impacts: whether AI narrows performance gaps by disproportionately lifting less-experienced participants (equalizer) or widens gaps by enabling experts to better leverage tools (amplifier). Understanding this distribution matters for pedagogy, workforce development, and equity in research production: if AI compresses the expertise gradient, training and access policies can prioritize broad inclusion; if it amplifies, training needs to emphasize advanced prompting and tool governance to avoid widening disparities.
+
+We keep tasks, instructions, and grading rubrics closely aligned with prior exercises to ensure comparability while tailoring the design to individual-level randomization within strata. The design isolates intent-to-treat effects within expertise tiers and allows transparent tests of heterogeneity across tiers and along a continuous experience measure (years of coding). To support interpretability, we pre-specify a compact outcome set (levels, timing, error detection, and referee assessments) and a small list of precision-enhancing controls. We also separate descriptive usage evidence (within the AI arm) from the core estimands to avoid conditioning on post-treatment behavior.
+
+Our design choices address two practical concerns. First, measurement: we standardize the classification of major/minor errors and use independent human and AI judges for referee outcomes to triangulate communication quality. Second, external validity: by spanning multiple events, software ecosystems (R/Stata/Python), and a broad experience range (undergraduate to professor), we gauge how AI assistance interacts with realistic heterogeneity in tools and backgrounds. These features, combined with preregistration and a limited set of pre-specified estimands, aim to balance credibility with informativeness.
+
+# Research Questions and Hypotheses
+
+- Primary question: Does AI access increase reproduction success rates relative to human-only controls?
+- Distributional question: Do treatment effects vary across expertise tiers, and does AI compress the expertise gradient?
+
+Hypotheses:
+- H1 (Main effect): Access to AI increases the probability of reproducing pre-specified results and reduces time-to-success.
+- H2 (Compression): Gains are weakly larger in lower tiers (undergraduates, master’s) than in higher tiers (faculty, postdoc), implying a reduced difference across tiers in the AI arm.
+- H3 (Error detection): AI access increases detection of major and minor coding errors.
+
+# Experimental Design
+
+We recruit participants across five strata—undergraduates, master’s students, PhD students, postdocs/researchers, and professors. Each participant completes an individual, timed, one‑day reproduction task using the same software as in the original study (R, Stata, or Python). The working window is seven hours. Participants assigned to the AI arm complete a short onboarding to the tools before the event so that any learning curve is minimized during the timed window.
+
+The study has two arms. In the control arm, participants work without AI assistance and explicitly pledge to refrain from using AI tools during the event. In the treatment arm, participants have access to ChatGPT Plus (GPT‑4o or successor, including code interpreter and vision). To preserve internal validity, we combine pledges with random screen checks and ex‑post audits of chat logs in the treatment arm. Any deviations are documented and, if material to inference, handled with pre‑specified per‑protocol and instrumental‑variable sensitivity analyses.
+
+Assignment is randomized 1:1 between AI and control within each expertise stratum. Randomization is pre‑generated and locked before events, and we report balance checks. All analyses include event‑by‑software fixed effects to absorb site‑ and tooling‑specific differences, and we report realized cell sizes and any deviations (such as no‑shows) before analysis.
+
+We target approximately N ≈ 300 participants (≈60 per stratum) across multiple events. With baseline gaps between undergraduates and professors of roughly 15–20 percentage points in success rates and an AI‑induced compression of about 40% of that gap, simulations indicate at least 80% power to detect the key interaction at α = 0.05. Standard errors are clustered at the event–software level, and we will report finalized assumptions and achieved power prior to locking the analysis.
+
+Randomization and allocation concealment. Randomization is stratified by expertise tier (UG, MA, PhD, PD, P) with 1:1 allocation within each stratum and event. The assignment list is pre‑generated by script with a fixed random seed (recorded in the registry) and stored as a read‑only file with a timestamped hash. Allocation is concealed from participants and graders until the event begins; the onsite coordinator reveals assignments at check‑in. No‑shows remain in their assigned arm for ITT; replacements are permitted only before the event starts and are re‑randomized using the same stratum‑specific seed. Any deviations (swaps across arms or late changes) are documented prior to analysis.
+
+Missingness and analysis sets. The primary analysis set is ITT: all randomized individuals with any outcome data. Outcomes are never imputed. For success and error counts, nonresponse leads to missing outcomes and the observation is excluded from that specific regression but remains for other outcomes. For timing, non‑successes are treated as right‑censored at the session cap (420 minutes) in survival analyses; we do not impute minutes in OLS. Covariates: categorical controls (tier, software, prior ChatGPT familiarity) include an explicit “Missing” category if needed; continuous controls (years of coding) use median imputation within stratum with a missingness indicator added to the model. We report outcome and covariate missingness by arm and verify robustness to listwise deletion.
+
+Power assumptions. Table \ref{tab:power-assumptions} summarizes the design inputs used for prospective power calculations; we will freeze any updates to these assumptions prior to registry lock.
+
+```{r tbl-power, results='asis'}
+lines <- c()
+lines <- c(lines, '\\begin{table}[H]')
+lines <- c(lines, '  \\centering')
+lines <- c(lines, '  \\caption{Prospective power: core design inputs (pre-lock)}')
+lines <- c(lines, '  \\label{tab:power-assumptions}')
+lines <- c(lines, '  {\\scriptsize')
+lines <- c(lines, '  \\begin{tabular}{ll}')
+lines <- c(lines, '  \\toprule')
+lines <- c(lines, '  \\textbf{Quantity} & \\textbf{Value} \\\\')
+lines <- c(lines, '  \\midrule')
+lines <- c(lines, '  Participants (N) & 300 ($\\approx$ 60 per tier) \\\\')
+lines <- c(lines, '  Allocation & 1:1 within tier \\\\')
+lines <- c(lines, '  Clusters (SE) & Event $\\times$ software (10--20) \\\\')
+lines <- c(lines, '  Baseline success (control) & 0.50 (finalize pre-lock) \\\\')
+lines <- c(lines, '  Detectable effect on success & $\\approx$ 10 pp @ 80\\% power, $\\alpha=0.05$ \\\\')
+lines <- c(lines, '  Minutes SD (cap) & $\\approx$ 60 (420-minute cap) \\\\')
+lines <- c(lines, '  Multiplicity (primary family) & Holm over four outcomes \\\\')
+lines <- c(lines, '  Small-cluster inference & Wild-cluster bootstrap if clusters < 30 (9,999 reps) \\\\')
+lines <- c(lines, '  \\bottomrule')
+lines <- c(lines, '  \\end{tabular}')
+lines <- c(lines, '  }')
+lines <- c(lines, '\\end{table}')
+cat(paste(lines, collapse='\n'))
+```
+
+# Outcomes and Measurement
+
+We organize outcomes into primary and secondary categories to align directly with our hypotheses and to keep inference focused. Primary outcomes capture whether participants reproduced the pre‑specified result (level), how long it took to first achieve a reproduction (timing), their ability to detect coding errors (major and minor), and the quality of their referee report. These outcomes together reflect the core goals of the exercise: getting to the right result, getting there efficiently, avoiding substantive mistakes, and communicating clearly.
+
+Secondary and exploratory outcomes provide contextual texture and mechanisms. In particular, we summarize robustness proposals and implementation, and—within the AI arm only—usage intensity via prompts/files/images/words. These help differentiate under‑ or over‑use patterns and support interpretation of treatment effects. Finally, two pre‑specified moderators (self‑reported years of coding and prior AI usage) enter as covariates in the main models and, where noted, as separate heterogeneity analyses; they are not outcomes themselves. The table below consolidates definitions, types, and assessment sources for quick reference; the analyses and figures throughout the plan use these exact definitions.
+
+```{r tbl-outcomes, results='asis'}
+suppressPackageStartupMessages({library(dplyr)})
+
+# Prefer kableExtra for PDF-friendly column widths; fall back to knitr::kable
+has_kx <- requireNamespace("kableExtra", quietly = TRUE)
+
+outcomes <- tibble::tribble(
+  ~Category,  ~Outcome,                          ~Type,          ~Measurement_Assessment,
+  "Primary",  "Success",                         "Binary",       "Core result reproduced by endline (yes/no).",
+  "Primary",  "Time-to-success",                 "Time (min)",   "Minutes until first successful reproduction (visualized via KM curves).",
+  "Primary",  "Error detection — major",         "Count",        "Number of major coding errors correctly identified (pre-defined rubric).",
+  "Primary",  "Error detection — minor",         "Count",        "Number of minor coding errors correctly identified (pre-defined rubric).",
+  "Primary",  "Referee — appropriateness",       "Qualitative",  "Appropriate vs. Not appropriate; human judges: A. Brodeur, J. Aparicio, D. Mikola; AI judge separately.",
+  "Primary",  "Referee — score",                  "0–5",          "0–5 (higher is better); human score is the average across three judges; AI judge recorded separately.",
+  "Secondary","Robustness proposals — quality",  "Ordinal",      "Quality of robustness proposals (standardized rubric).",
+  "Secondary","Robustness implementations — count","Count",      "Number of robustness checks successfully implemented (standardized rubric).",
+  "Secondary","Prompt usage — count (AI arm)",    "Count",        "Number of prompts (usage logs / self-report; AI arm only).",
+  "Secondary","Prompt usage — length (AI arm)",   "Continuous",   "Length of prompts (usage logs / self-report; AI arm only).",
+  "Moderator","Years of coding",                  "Continuous",   "Self-reported; used as moderator (not an outcome).",
+  "Moderator","Prior AI usage",                   "Categorical",  "Self-reported; used as moderator (not an outcome)."
+)
+
+if (has_kx) {
+  kableExtra::kbl(outcomes, booktabs = TRUE, longtable = TRUE,
+                  caption = "Outcomes and measurements (primary and secondary).",
+                  col.names = c("Category","Outcome","Type","Measurement / Assessment")) |>
+    kableExtra::kable_styling(latex_options = c("hold_position","scale_down"), font_size = 9) |>
+    kableExtra::column_spec(1, width = "2.0cm") |>
+    kableExtra::column_spec(2, width = "3.8cm") |>
+    kableExtra::column_spec(3, width = "2.3cm") |>
+    kableExtra::column_spec(4, width = "7.0cm") |>
+    kableExtra::collapse_rows(columns = 1, valign = "top") |>
+    print()
+} else {
+  # Fallback: basic kable (may be wider)
+  knitr::kable(outcomes, booktabs = TRUE,
+               caption = "Outcomes and measurements (primary and secondary).",
+               col.names = c("Category","Outcome","Type","Measurement / Assessment"))
+}
+```
+
+We pre-define classification of “major” versus “minor” errors and use a standardized grading rubric. As a preview of magnitudes, the table below (Table \ref{tab:branches}) reports simple means (and standard deviations) by arm, together with Welch tests for the difference in means. Figures then visualize the core outcomes and timing distributions that the analysis will focus on (Figures \ref{fig:outcomes} and \ref{fig:km}).
+
+```{r tbl-branches, results='asis'}
+suppressPackageStartupMessages({library(dplyr)})
+
+ind <- readRDS('data/AI individuals.rds')
+ind <- ind %>% mutate(branch = factor(as.character(branch), levels = c('Human-Only','AI-Assisted')))
+
+# Utility formatters
+fmt <- function(x) sprintf('%0.3f', x)
+fmt_p <- function(p) {
+  if (!is.finite(p)) return('-')
+  if (p < 0.001) return('\\textless0.001')
+  sprintf('%0.3f', p)
+}
+cell_ms <- function(m, s) sprintf('\\shortstack{%s\\\\(%s)}', fmt(m), fmt(s))
+cell_dp <- function(d, p) sprintf('\\shortstack{%s\\\\\\relax[%s]}', fmt(d), fmt_p(p))
+
+# Welch test and difference (group1 − group2)
+pw <- function(x, g1, g2) {
+  x1 <- x[ind$branch == g1]
+  x2 <- x[ind$branch == g2]
+  d  <- mean(x1, na.rm = TRUE) - mean(x2, na.rm = TRUE)
+  p  <- tryCatch(t.test(x1, x2)$p.value, error = function(e) NA_real_)
+  list(d = d, p = p)
+}
+
+# Outcomes (Tables 4–5 scope)
+vars <- list(
+  'Reproduction'                         = 'reproduction_i',
+  'Minutes to success'                   = 'minutes_to_success_i',
+  'Number of minor errors'               = 'minor_errors_i',
+  'Number of major errors'               = 'major_errors_i',
+  'At least one good robustness check'   = 'good_checks_i',
+  'At least two good robustness checks'  = 'two_good_checks_i',
+  'Appropriate (human)'                  = 'referee_app_human_i',
+  'Score (human)'                        = 'referee_score_human_i',
+  'Appropriate (AI)'                     = 'referee_app_ai_i',
+  'Score (AI)'                           = 'referee_score_ai_i'
+)
+
+lines <- c()
+lines <- c(lines, '\\begin{table}[H]')
+lines <- c(lines, '      \\centering')
+lines <- c(lines, '      \\caption{Comparison of Human-Only and AI-Assisted Metrics}')
+lines <- c(lines, ' \\label{tab:branches}')
+lines <- c(lines, ' {\\scriptsize')
+lines <- c(lines, '')
+lines <- c(lines, ' \\begin{tabular}{lccc}')
+lines <- c(lines, ' \\toprule')
+lines <- c(lines, ' \\textbf{Variable} & \\textbf{Human-Only} & \\textbf{AI-Assisted} & \\textbf{\\shortstack{Human-Only\\\\vs\\\\AI-Assisted}}\\\\')
+lines <- c(lines, ' \\midrule')
+
+for (lab in names(vars)) {
+  v <- vars[[lab]]
+  x <- ind[[v]]
+  mH <- mean(x[ind$branch == 'Human-Only'],  na.rm = TRUE)
+  sH <- sd(  x[ind$branch == 'Human-Only'],  na.rm = TRUE)
+  mA <- mean(x[ind$branch == 'AI-Assisted'],  na.rm = TRUE)
+  sA <- sd(  x[ind$branch == 'AI-Assisted'],  na.rm = TRUE)
+  d_HA <- pw(x, 'Human-Only', 'AI-Assisted')
+  line <- sprintf('%s & %s & %s & %s \\\\',
+                  lab,
+                  cell_ms(mH, sH), cell_ms(mA, sA),
+                  cell_dp(d_HA$d, d_HA$p))
+  lines <- c(lines, line, ' [1em]')
+}
+lines <- c(lines, ' \\bottomrule')
+lines <- c(lines, ' \\end{tabular}')
+lines <- c(lines, ' \\vspace{0.25em}')
+lines <- c(lines, ' \\parbox{0.9\\textwidth}{\\scriptsize \\textit{Note:} Columns 2--3 present means and standard deviations in parentheses for the two arms; column 4 presents the difference in means (Human-Only − AI-Assisted) and two-sided Welch p-values in brackets.}')
+lines <- c(lines, ' }')
+lines <- c(lines, ' \\end{table}')
+
+cat(paste(lines, collapse='\n'))
+```
+
+```{r fig-outcomes, fig.cap='Primary outcomes (levels): reproduction and errors, plus usage context. Notes: Four-panel layout with (top-left) reproduction rates (raw), (top-right) prompt distribution (usage), (bottom-left) major errors (raw), (bottom-right) minor errors (raw). Difference-style plots are intentionally omitted. \\label{fig:outcomes}', fig.show='hold', out.width='45%', fig.pos='H'}
+# Four-panel (levels): reproduction (raw), prompt usage, major errors (raw), minor errors (raw)
+files <- c('reproduction rates (raw).pdf',
+           'prompt distribution.pdf',
+           'major errors (raw).pdf',
+           'minor errors (raw).pdf')
+knitr::include_graphics(ensure_sanitized_figures(files))
+```
+
+\FloatBarrier
+
+<!-- Consolidated in fig-outcomes; removed separate error panel to reduce duplication. -->
+
+```{r fig-km, fig.cap='Time-to-success: Kaplan–Meier by arm. Notes: Survival curves stratified by treatment (Control vs. ChatGPT+). \\label{fig:km}', out.width='60%', fig.pos='H'}
+suppressPackageStartupMessages({library(dplyr); library(ggplot2); library(survival); library(ggsurvfit)})
+ind <- tryCatch(readRDS('data/AI individuals.rds'), error = function(e) NULL)
+if (!is.null(ind)) {
+  survdat <- ind %>% transmute(time = minutes_to_success_i,
+                               status = as.integer(reproduction_i==1),
+                               treatment = factor(ifelse(treatment==1, 'ChatGPT+', 'Control'),
+                                                  levels = c('Control','ChatGPT+')))
+  if (sum(!is.na(survdat$time) & !is.na(survdat$status)) > 0) {
+    fit <- survfit(Surv(time, status) ~ treatment, data = survdat)
+    print(ggsurvfit(fit) +
+      labs(x = 'Minutes', y = 'Survival (not yet reproduced)') +
+      scale_color_manual(values = c('Control' = '#333333', 'ChatGPT+' = '#1f77b4'), guide = guide_legend(title = NULL)) +
+      theme_minimal(base_size = 12) +
+      theme(legend.position = 'bottom'))
+  }
+}
+```
+
+\FloatBarrier
+
+<!-- Removed time-to milestone panels to avoid redundancy with KM curves. -->
+
+We will interpret Figure \ref{fig:outcomes} as the primary visualization of level outcomes (H1 and H3) and Figure \ref{fig:km} as complementary evidence on timing. We omit difference-style and cumulative milestone panels to reduce redundancy and focus attention on the preregistered estimands.
+
+# Controls (Covariates and Stratification)
+
+We include a small, pre‑specified set of controls to improve precision and absorb systematic differences that are not of direct interest. Stratification by expertise tier (Undergraduate, Master’s, PhD, Postdoc, Professor) reflects our design and is included as dummies in the main specification so that treatment effects are identified within tier; the interaction with treatment captures heterogeneous effects along the expertise ladder. Event and article fixed effects absorb site‑ and task‑specific differences. Software indicators (R/Stata/Python) capture baseline workflow differences across toolchains. Finally, self‑reported years of coding and prior AI familiarity improve precision and help stabilize estimates across events.
+
+Two variables play a dual role as moderators in pre‑specified secondary analyses: (i) years of coding (interacted with treatment), and (ii) within‑AI usage measures (prompts, files, images, words) which we study only in the AI arm to characterize under‑/over‑use patterns. These moderators are always treated as covariates in the main models; the secondary analyses are reported separately and do not change the main estimands.
+
+```{r tbl-controls, results='asis'}
+suppressPackageStartupMessages(library(dplyr))
+has_kx <- requireNamespace("kableExtra", quietly = TRUE)
+
+controls <- tibble::tribble(
+  ~Variable,          ~Role,            ~Type,         ~Coding_or_Levels,                               ~Notes,
+  "Expertise tier",   "Stratification; control", "Categorical", "Undergrad, Master’s, PhD, Postdoc, Professor", "Tier dummies in main specs; interacted with AI (heterogeneity).",
+  "Event",            "Fixed effect",  "Categorical", "One FE per event",                              "Absorbs site/time differences (not a parameter of interest).",
+  "Article",          "Fixed effect",  "Categorical", "One FE per task/article",                      "Absorbs task-specific difficulty/fit (not a parameter).",
+  "Software",         "Control",       "Categorical", "R, Stata, Python",                              "Preferred software indicator (workflow baseline).",
+  "Years of coding",  "Control; moderator", "Continuous",  "Self-reported years",                        "Improves precision; interacted with AI in secondary (yrs×AI).",
+  "Prior ChatGPT familiarity", "Control",   "Categorical", "None, Some, Heavy",                             "Self‑reported familiarity with ChatGPT/AI tools.",
+  "Usage (AI arm)",   "Moderator (AI only)", "Continuous",  "log(1 + prompts / files / images / words)",  "Secondary/appendix within AI arm; not a control in main ITT.",
+  "Clustering",       "Estimation setting", "—",          "SE clustered by event×software",              "Variance estimation (not a control)."
+)
+
+if (has_kx) {
+  kableExtra::kbl(controls, booktabs = TRUE, longtable = FALSE,
+                  caption = "Controls, fixed effects, and moderators (pre-specified).") |>
+    kableExtra::kable_styling(latex_options = c("hold_position","scale_down"), font_size = 8) |>
+    kableExtra::column_spec(1, width = "2.0cm") |>
+    kableExtra::column_spec(2, width = "2.6cm") |>
+    kableExtra::column_spec(3, width = "1.6cm") |>
+    kableExtra::column_spec(4, width = "3.8cm") |>
+    kableExtra::column_spec(5, width = "4.0cm") |>
+    print()
+} else {
+  knitr::kable(controls, booktabs = TRUE,
+               caption = "Controls, fixed effects, and moderators (pre-specified).")
+}
+```
+
+\FloatBarrier
+
+<!-- balance table moved into Statistical Analysis Plan -->
+
+\FloatBarrier
+
+# Statistical Analysis Plan
+
+Let $Y_i$ denote a pre‑specified outcome (success; minutes to success; error counts; referee‑report assessments). We estimate intent‑to‑treat effects in a tier‑interaction framework that allows the AI effect to vary with expertise. Formally,
+
+$$
+Y_i \,=\, \beta_0 \, + \, \beta_1 A_i \, + \, \sum_s \gamma_s\,\mathbb{1}\{\mathrm{Tier}_i=s\} \, + \, \sum_s \delta_s\, A_i\,\mathbb{1}\{\mathrm{Tier}_i=s\} \, + \, X_i'\theta \, + \, \lambda_{e(i)\times s(i)} \, + \, \varepsilon_i,
+$$
+
+where $A_i$ is the treatment indicator, $\lambda_{e(i)\times s(i)}$ are event‑by‑software fixed effects, and $X_i$ collects the pre‑specified controls (years of coding and prior AI familiarity). For binary outcomes (success; appropriate referee) we estimate linear probability models; for continuous outcomes (minutes; 0–5 referee score) we use OLS; and for counts (minor/major errors) we fit a Poisson GLM with a log link:
+
+$$
+\mathbb{E}[Y_i\mid\cdot] \,=\, \exp\!\left( \beta_0 + \beta_1 A_i + \sum_s \gamma_s\,\mathbb{1}\{\mathrm{Tier}_i=s\} + \sum_s \delta_s\, A_i\,\mathbb{1}\{\mathrm{Tier}_i=s\} + X_i'\theta + \lambda_{e(i)\times s(i)} \right).
+$$
+
+To assess the success of randomization and support the modeling choices, we report balance on all individual-level controls used in the specification. The table below (Table \ref{tab:balance}) shows means (standard deviations) by arm and Welch tests for the difference in means.
+
+```{r tbl-balance, results='asis', echo=FALSE}
+suppressPackageStartupMessages({library(dplyr)})
+
+ind <- readRDS('data/AI individuals.rds')
+ind <- ind %>% mutate(
+  arm = factor(ifelse(treatment==1, 'AI-Assisted','Human-Only'), levels = c('Human-Only','AI-Assisted')),
+  tier = factor(tier, levels = c('UG','MA','PhD','PD','P')),
+  software3 = factor(preferred_software, levels = c('R','Stata','Python')),
+  prior_gpt_familiarity = factor(prior_gpt_familiarity, levels = c('None','Some','Heavy'))
+)
+
+fmt <- function(x) sprintf('%0.3f', x)
+fmt_p <- function(p) { if (!is.finite(p)) return('-'); if (p < 0.001) return('\\textless0.001'); sprintf('%0.3f', p) }
+cell_ms <- function(m, s) sprintf('\\shortstack{%s\\\\(%s)}', fmt(m), fmt(s))
+cell_dp <- function(d, p) sprintf('\\shortstack{%s\\\\\\relax[%s]}', fmt(d), fmt_p(p))
+
+mk_row <- function(x, label){
+  xH <- x[ind$arm=='Human-Only']
+  xA <- x[ind$arm=='AI-Assisted']
+  mH <- mean(xH, na.rm = TRUE); sH <- sd(xH, na.rm = TRUE)
+  mA <- mean(xA, na.rm = TRUE); sA <- sd(xA, na.rm = TRUE)
+  d  <- mH - mA
+  p  <- tryCatch(t.test(xH, xA)$p.value, error = function(e) NA_real_)
+  sprintf('%s & %s & %s & %s \\\\ [1em]', label, cell_ms(mH,sH), cell_ms(mA,sA), cell_dp(d,p))
+}
+
+lab_tier <- c(UG = 'Undergraduate', MA = "Master's", PhD = 'PhD', PD = 'Postdoc', P = 'Professor')
+
+lines <- c()
+lines <- c(lines, '\\begin{table}[H]')
+lines <- c(lines, '  \\centering')
+lines <- c(lines, '  \\caption{Balance of Participant Characteristics by Arm}')
+lines <- c(lines, '  \\label{tab:balance}')
+lines <- c(lines, '  {\\scriptsize')
+lines <- c(lines, '  \\begin{tabular}{lccc}')
+lines <- c(lines, '  \\toprule')
+lines <- c(lines, '  \\textbf{Variable} & \\textbf{Human-Only} & \\textbf{AI-Assisted} & \\textbf{\\shortstack{Human-Only\\\\vs\\\\AI-Assisted}} \\\\')
+lines <- c(lines, '  \\midrule')
+
+# Years of coding (continuous)
+lines <- c(lines, mk_row(ind$years_coding, 'Years of coding'))
+
+# Tier (five dummies)
+for (tt in levels(ind$tier)) {
+  if (!is.na(tt)) {
+    x <- as.integer(ind$tier == tt)
+    lines <- c(lines, mk_row(x, sprintf('Tier: %s', lab_tier[[tt]])))
+  }
+}
+
+# Software (three dummies)
+for (sw in levels(ind$software3)) {
+  if (!is.na(sw)) {
+    x <- as.integer(ind$software3 == sw)
+    lines <- c(lines, mk_row(x, sprintf('Software: %s', sw)))
+  }
+}
+
+# Prior ChatGPT familiarity (three dummies)
+for (ff in levels(ind$prior_gpt_familiarity)) {
+  if (!is.na(ff)) {
+    x <- as.integer(ind$prior_gpt_familiarity == ff)
+    lines <- c(lines, mk_row(x, sprintf('Prior ChatGPT familiarity: %s', ff)))
+  }
+}
+
+lines <- c(lines, '  \\bottomrule')
+lines <- c(lines, '  \\end{tabular}')
+lines <- c(lines, '  \\vspace{0.25em}')
+lines <- c(lines, '  \\parbox{0.9\\textwidth}{\\scriptsize \\textit{Note:} Means and standard deviations in parentheses by arm; difference column shows Human-Only − AI-Assisted and two-sided Welch $p$-values in brackets. All variables are individual-level controls used in the models.}')
+lines <- c(lines, '  }')
+lines <- c(lines, '\\end{table}')
+
+cat(paste(lines, collapse='\n'))
+```
+
+For time‑to‑event (minutes to success), we present nonparametric Kaplan–Meier curves by arm and report the log‑rank test for equality of survival functions. In all models, we use heteroskedasticity‑robust standard errors clustered at the event–software level. We report coefficient estimates with 95% confidence intervals for the main effect $\beta_1$ and the tier interactions $\delta_s$, and we conduct the pre‑specified compression test on the interaction terms. As a sensitivity check, we will also provide wild‑cluster bootstrap p‑values when the number of clusters is modest.
+
+Heterogeneity and secondary analyses follow two paths. First, we replace tier dummies with a continuous moderator (years of coding) interacted with treatment to trace a dose–response. Second, within the AI arm only, we relate outcomes to usage intensity (prompts/files/images/words) to characterize under‑ and over‑use; these are descriptive and do not alter the main ITT estimands. We also consider event‑order interactions to gauge learning across events.
+
+# Results
+
+We present results in three parts that map directly to the research questions. First, we report intent‑to‑treat effects of AI access on the primary outcomes, with expertise‑tier interactions to quantify distributional patterns (equalizer vs. amplifier). Second, we evaluate referee‑report outcomes to capture communication and assessment quality, paralleling the main design with human and AI judges. Third, we summarize core robustness checks that probe alternative definitions and model choices. Throughout, standard errors are clustered at the event–software level, and the coefficients are displayed with confidence intervals and a pre‑specified compression test for the interaction terms.
+
+The main table (Table \ref{tab:pap-main}) provides a compact view of the four primary outcomes: reproduction, minutes to success, and counts of minor and major errors. The AI coefficient speaks to H1 (average effect), while the interactions across tiers speak to H2 (compression). We interpret effect magnitudes jointly rather than in isolation, looking for coherence across levels, timing, and error detection. The corresponding Kaplan–Meier curves (Figure \ref{fig:km}) provide a complementary view of H1 for time‑to‑success, and are discussed alongside these estimates.
+
+```{r tbl-main, results='asis'}
+emit_table_with_caption('output/tables/pap_main.tex',
+                        caption='Main effects across outcomes (pre-analysis layout). Standard errors clustered by event–software.',
+                        label='tab:pap-main')
+```
+
+Definition of robustness columns: “≥1 check” indicates at least one qualifying robustness check per the pre‑specified rubric; “≥2 checks” indicates at least two qualifying checks.
+
+\FloatBarrier
+
+We will interpret the AI coefficient as H1, the set of interaction terms as H2, and compare magnitudes across outcomes in the same layout to assess coherence.
+
+We next examine referee‑report outcomes (Table \ref{tab:referee}), which connect to the communication and assessment dimension of reproduction. We pre‑specify models for the binary Appropriateness indicator and the 0–5 Score, each reported separately for human and AI assessors but estimated on the same right‑hand side as the main specification. These results shed light on whether AI support changes not just success and speed, but also the quality of participants’ evaluation of evidence and errors (H3), and whether patterns mirror the tier‑based compression observed in the main outcomes. In the Appendix, we present years‑based versions of the main and referee tables (Tables \ref{tab:pap_main_years} and \ref{tab:pap_referee_years}; replacing tier with a continuous years‑of‑coding interaction) to complement the tier‑based analysis and trace a dose–response along experience.
+
+```{r tbl-referee, results='asis'}
+Sys.setenv(OMP_NUM_THREADS = '1')
+suppressPackageStartupMessages({library(dplyr); library(fixest)})
+ind <- readRDS('data/AI individuals.rds') %>%
+  mutate(event = factor(game),
+         article = factor(article),
+         software3 = factor(preferred_software, levels = c('R','Stata','Python')),
+         tier = factor(tier, levels = c('UG','MA','PhD','PD','P')),
+         cluster_es = interaction(event, software3, drop = TRUE))
+
+f_ref_app_h   <- referee_app_human_i   ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+f_ref_score_h <- referee_score_human_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+f_ref_app_ai  <- referee_app_ai_i      ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+f_ref_score_ai<- referee_score_ai_i    ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+
+m_ref_app_h    <- feols(f_ref_app_h,    data = ind, vcov = ~cluster_es)
+m_ref_score_h  <- feols(f_ref_score_h,  data = ind, vcov = ~cluster_es)
+m_ref_app_ai   <- feols(f_ref_app_ai,   data = ind, vcov = ~cluster_es)
+m_ref_score_ai <- feols(f_ref_score_ai, data = ind, vcov = ~cluster_es)
+
+write_ai_table(
+  models = list(m_ref_app_h, m_ref_score_h, m_ref_app_ai, m_ref_score_ai),
+  col_titles = c('Appropriate (human)', 'Score 0–5 (human)', 'Appropriate (AI)', 'Score 0–5 (AI)'),
+  file = 'output/tables/pap_referee.tex',
+  coef_mode = 'tier',
+  controls_desc = 'Event & article FE; years of coding; software; prior AI familiarity.'
+)
+
+emit_table_with_caption('output/tables/pap_referee.tex',
+  caption='Referee report outcomes: human and AI assessments. Standard errors clustered by event–software.',
+  label='tab:referee')
+```
+
+\FloatBarrier
+
+Finally, we probe robustness to alternative outcome definitions and specifications. For compactness, the main results table also reports robustness columns (≥1 and ≥2 checks), which implement the pre‑specified threshold variations. We expect sign and order‑of‑magnitude stability, with shifts that are interpretable given the alternative codings. These checks complement the design‑based safeguards (stratification, fixed effects, pre‑specified controls) and help establish that the main conclusions are not an artifact of a particular functional form or threshold.
+
+
+
+\FloatBarrier
+
+\FloatBarrier
+
+# Data Management, Documentation, and Ethics
+
+We will publish de-identified participant-level data, code, and grading rubrics on OSF and GitHub upon acceptance (view-only earlier when necessary). Sensitive logs will be redacted according to the consent form. The study will obtain institutional ethics approval prior to data collection. Any deviations from protocol will be preregistered before accessing outcome data.
+
+# Timeline and Deliverables
+
+We plan five one‑day events across partner institutions within the academic year. Each event follows the same protocol: pre‑generated randomization within tiers, a standardized onboarding for the AI arm, and a seven‑hour work window. We lock randomization and materials ahead of time and document any deviations (no‑shows, substitutions) prior to analysis.
+
+After the fifth event, we finalize the preregistration lock and freeze all code paths before accessing outcome data. The analysis phase proceeds in two stages. First, we produce the pre‑specified main results and figures, checking internal coherence and documenting data lineage. Second, we generate the pre‑specified secondary and appendix tables to illuminate mechanisms and robustness. All outputs are cross‑validated against the preregistered estimands and data checks.
+
+Deliverables include a public replication archive (de‑identified individual‑level data, code, and grading rubrics), a pre‑analysis report that summarizes the locked design and main estimands, and a manuscript integrating results and interpretation. We aim to share preliminary results with partners quickly after the final event and proceed to manuscript submission once the replication archive is complete.
+
+# Limitations
+
+Despite stratified randomization and event‑by‑software fixed effects, external validity remains a key limitation. Participating institutions, topics, and software ecosystems may not reflect the broader population of replication exercises or research teams. We minimize site‑specific artifacts by controlling for event–software cells and by standardizing instructions and grading rubrics, but context still matters for both the baseline rates and the scope for AI assistance.
+
+Measurement and compliance present additional challenges. Although we combine pledges, spot checks, and audits to monitor AI usage, some noncompliance in the control arm or heterogeneous usage quality in the treatment arm is inevitable. We pre‑specify strategies to document and, when necessary, bound any bias (e.g., per‑protocol and IV sensitivity), but these strategies trade robustness for different assumptions. Grading, while rubric‑based, can also admit residual subjectivity; we address this with clear definitions, double‑checks, and rater consensus when needed.
+
+Finally, the evolving nature of AI tools introduces temporal drift. Model updates can affect both capability and interface, potentially shifting the level and composition of gains even with identical prompts. We log model versions and timing, keep onboarding consistent across events, and emphasize design features (e.g., within‑tier randomization) that stabilize inference. Nevertheless, any broader extrapolation should consider how quickly the technology landscape changes and whether the tasks studied here generalize to other domains or longer‑horizon research workflows.
+
+# Appendix
+
+These additional analyses extend and contextualize the main results without altering the primary estimands. We examine moderators beyond the tier‑based interactions: a continuous years‑of‑coding interaction that traces a dose–response (Tables \ref{tab:pap_main_years} and \ref{tab:pap_referee_years}), and within‑AI usage intensities (prompts, files, images, words) that help characterize under‑ and over‑use. We also provide usage‑by‑tier summaries in the AI arm (Table \ref{tab:usage-by-tier}) to illustrate whether intensity aligns with the observed treatment heterogeneity. These tables are not substitutes for the main ITT estimands; they are meant to clarify mechanisms and the consistency of patterns.
+
+ 
+
+```{r tbl-years-main, results='asis'}
+emit_table_with_caption('output/tables/pap_main_years_core.tex',
+  caption='Main outcomes with years-of-coding moderator (interaction with AI).',
+  label='tab:pap_main_years')
+```
+
+```{r tbl-years-ref, results='asis'}
+emit_table_with_caption('output/tables/pap_referee_years.tex',
+  caption='Referee outcomes with years-of-coding moderator (interaction with AI).',
+  label='tab:pap_referee_years')
+```
+
+\FloatBarrier
+
+```{r tbl-usage-by-tier, results='asis'}
+suppressPackageStartupMessages({library(dplyr)})
+ind <- readRDS('data/AI individuals.rds')
+ai <- ind %>% filter(treatment == 1)
+ai <- ai %>% mutate(tier = factor(tier, levels = c('UG','MA','PhD','PD','P')))
+lab_tier <- c(UG = 'Undergraduate', MA = "Master's", PhD = 'PhD', PD = 'Postdoc', P = 'Professor')
+
+fmt <- function(x) sprintf('%0.3f', x)
+cell_ms <- function(m, s) sprintf('\\shortstack{%s\\\\(%s)}', fmt(m), fmt(s))
+
+tiers <- levels(ai$tier)
+lines <- c()
+lines <- c(lines, '\\begin{table}[H]')
+lines <- c(lines, '  \\centering')
+lines <- c(lines, '  \\caption{Usage by expertise tier in the AI arm (mean and standard deviation).}')
+lines <- c(lines, '  \\label{tab:usage-by-tier}')
+lines <- c(lines, '  {\\scriptsize')
+lines <- c(lines, '  \\begin{tabular}{lccccc}')
+lines <- c(lines, '  \\toprule')
+lines <- c(lines, '  \\textbf{Tier} & \\textbf{Prompts} & \\textbf{Files} & \\textbf{Images} & \\textbf{Words} & \\textbf{N} \\\\')
+lines <- c(lines, '  \\midrule')
+for (tt in tiers) {
+  dat <- ai %>% filter(tier == tt)
+  mP <- mean(dat$prompts_i, na.rm = TRUE); sP <- sd(dat$prompts_i, na.rm = TRUE)
+  mF <- mean(dat$files_i,   na.rm = TRUE); sF <- sd(dat$files_i,   na.rm = TRUE)
+  mI <- mean(dat$images_i,  na.rm = TRUE); sI <- sd(dat$images_i,  na.rm = TRUE)
+  mW <- mean(dat$words_i,   na.rm = TRUE); sW <- sd(dat$words_i,   na.rm = TRUE)
+  N  <- sum(!is.na(dat$prompts_i) | !is.na(dat$files_i) | !is.na(dat$images_i) | !is.na(dat$words_i))
+  line <- sprintf('%s & %s & %s & %s & %s & %d \\\\',
+                  lab_tier[tt],
+                  cell_ms(mP, sP), cell_ms(mF, sF), cell_ms(mI, sI), cell_ms(mW, sW), N)
+  lines <- c(lines, line)
+}
+lines <- c(lines, '  \\bottomrule')
+lines <- c(lines, '  \\end{tabular}')
+lines <- c(lines, '  }')
+lines <- c(lines, '\\end{table}')
+
+cat(paste(lines, collapse='\n'))
+```
+
+\FloatBarrier
+
+# References
+
+References render from `references.bib`. We will cite prior AI Replication Games and related methodology upon registration finalization.

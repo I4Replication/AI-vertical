@@ -1,48 +1,45 @@
-\begin{table}
-\centering
-\begin{tblr}[         %% tabularray outer open
-]                     %% tabularray outer close
-{                     %% tabularray inner open
-colspec={Q[]Q[]},
-column{2}={}{halign=c,},
-column{1}={}{halign=l,},
-hline{28}={1,2}{solid, black, 0.05em},
-}                     %% tabularray inner close
-\toprule
-& P \\ \midrule %% TinyTableHeader
-(Intercept) & \num{81.096} \\
-& (\num{89.879}) \\
-log1p(prompts\_i) & \num{-17.273} \\
-& (\num{50.064}) \\
-log1p(files\_i) & \num{30.707} \\
-& (\num{21.518}) \\
-log1p(images\_i) & \num{4.965} \\
-& (\num{24.917}) \\
-log1p(words\_i) & \num{8.778} \\
-& (\num{42.104}) \\
-years\_coding & \num{7.118} \\
-& (\num{2.839}) \\
-event = Ottawa & \num{19.346} \\
-& (\num{17.397}) \\
-event = Sheffield & \num{43.748} \\
-& (\num{14.094}) \\
-event = Cornell & \num{32.517} \\
-& (\num{13.290}) \\
-event = Bogota & \num{34.806} \\
-& (\num{15.618}) \\
-event = Tilburg & \num{10.639} \\
-& (\num{11.427}) \\
-event = Virtual & \num{10.480} \\
-& (\num{12.101}) \\
-event = Virtual 2025 & \num{50.469} \\
-& (\num{19.543}) \\
-Num.Obs. & \num{261} \\
-R2 & \num{0.013} \\
-R2 Adj. & \num{-0.035} \\
-AIC & \num{3516.8} \\
-BIC & \num{3563.1} \\
-RMSE & \num{194.11} \\
-Std.Errors & by: cluster\_es \\
-\bottomrule
-\end{tblr}
-\end{table}
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{5}{c}}
+\hline\hline
+ & (1) & (2) & (3) & (4) & (5)
+\\
+ & Undergraduate & Master's & PhD & Postdoc & Professor
+ \\
+\hline
+log(1+prompts) & -312.314 & -5207.855 & -178.903 & -309.931 &  1874.249
+\\
+ & ( 232.157) &  & ( 129.807) & ( 389.014) & 
+\\
+ & [-810.241;  185.613] &  & [-452.773;  94.966] & [-1139.095;  519.232] & 
+\\
+log(1+files) &  318.435 & -10244.652 & -230.693*** & -29.766 & -56.584
+\\
+ & ( 441.417) &  & ( 53.486) & ( 283.047) & 
+\\
+ & [-628.310;  1265.179] &  & [-343.539; -117.848] & [-633.066;  573.534] & 
+\\
+log(1+images) & -138.616 & -430.180 &  77.265 &  479.794 & -898.993
+\\
+ & ( 307.698) &  & ( 138.081) & ( 492.807) & 
+\\
+ & [-798.563;  521.331] &  & [-214.060;  368.589] & [-570.600;  1530.188] & 
+\\
+log(1+words) &  51.793 &  5382.139 &  33.085 &  949.474 & -659.705
+\\
+ & ( 105.998) &  & ( 193.721) & ( 698.688) & 
+\\
+ & [-175.549;  279.136] &  & [-375.630;  441.800] & [-539.744;  2438.692] & 
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  289.359 &  257.171 &  237.599 &  225.792 &  261.790
+\\
+Obs. & 27 & 22 & 33 & 24 & 27
+\\
+\hline
+\hline\hline
+\multicolumn{6}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{6}{l}{Controls: Event \& article FE; years of coding; software; prior AI familiarity (AI arm only).}\\
+\multicolumn{6}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

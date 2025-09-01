@@ -1,0 +1,38 @@
+# Reviewer Comments
+- Comment 18 (Derek Mikola 2025-07-29T13:25:20Z): Can we over-sample undergraduates and pay them, not offering coauthorship? Can we make the task a half day?
+- Comment 27 (Derek Mikola 2025-07-29T13:36:46Z): It would benefit if we had a systematic way to incorporate prompts, as well as analyze them.
+- Comment 31 (Derek Mikola 2025-07-29T19:24:20Z): want to control for ability as reproducers: have you participated in AI games? Have you participated in regular games?
+- Comment 8 (Derek Mikola 2025-07-29T13:51:44Z): It would be worth understanding what, precisely, the main exhibit for this article is.What I'm envisioning is a graph which plots the treatment effects relative to undergrad (like coefplot) for each of the subgroups. Perhaps that is incorrect?
+- Comment 34 (Derek Mikola 2025-07-29T13:49:35Z): We will not have the observations to meaningfully estimate these parameters. You should add: "and perform joint hypothesis testing that all the coefficients are equal to one another"
+- Comment 10 (Abel Brodeur 2025-06-17T16:53:39Z): probably less profs than students. I can get 5-10 profs for uOttawa but probably way more students.
+- Comment 11 (Juan Pablo Posada Aparicio 2025-06-17T20:53:34Z): 30 profs max you think?
+- Comment 32 (Derek Mikola 2025-07-29T13:41:52Z): I do not think this is correct. You probably want to estimate standard errors using a Cluster Robust Variance Estimator (CRVE) where the unit you are clustering on is the event-software. We need to be clear what "software" is.How does this interact with the treatment?
+- Comment 35 (Lenka Fiala 2025-06-17T21:10:12Z): This should be probably described in greater detail - if only because participants will have to agree to it!
+- Comment 36 (David Valenta 2025-06-19T16:10:02Z): Would this be one of those employee tracking software that takes random screenshots? I assume this would require installation on participant's computer and I would probably be uncomfortable with that as a participant.
+- Comment 22 (Derek Mikola 2025-07-29T19:34:40Z): Perhaps we do it from 9-13:00 and 13:00 to 17:00.
+- Comment 23 (Derek Mikola 2025-07-29T19:34:49Z): How would we deal with censoring?
+- Comment 24 (Derek Mikola 2025-07-29T19:35:21Z): Questions: How much more time would you need to complete this?
+- Comment 25 (Derek Mikola 2025-07-29T19:36:13Z): Also: hold people in the lecture hall until they have completed the survey.
+- Comment 12 (Abel Brodeur 2025-06-17T16:54:22Z): No way we get that many postdoc fellows. Actually, unclear what to do with this group. Maybe merging with faculty.
+- Comment 13 (Abel Brodeur 2025-06-17T16:54:40Z): And what about researchers with PhD not at a uni?
+- Comment 14 (Juan Pablo Posada Aparicio 2025-06-17T20:53:08Z): What about postdocs + researchers in the same tier?
+- Comment 0 (Derek Mikola 2025-07-29T13:12:16Z): Alphabetical is fine; would you ever consider importance (Juan, Abel) then alphabetical?
+- Comment 28 (David Valenta 2025-06-19T16:13:55Z): Clarity of? the referee report?
+- Comment 15 (David Valenta 2025-06-19T15:58:38Z): do we expect the students to have some knowledge of Stata / R (depending on the paper) as we did in the first games, or do we take anyone from a relevant field?
+- Comment 16 (David Valenta 2025-06-19T15:58:38Z): do we expect the students to have some knowledge of Stata / R (depending on the paper) as we did in the first games, or do we take anyone from a relevant field?
+- Comment 1 (Derek Mikola 2025-07-29T13:13:37Z): consider "researchers with a Ph.D." which is a useful distinction and easily bins people who participate but may otherwise not be a postdoc or affiliated with an institution.
+- Comment 29 (David Valenta 2025-06-19T15:59:55Z): I am not  sure familiarity is the best defined one.I would add usage of AI for data analysis/other work tasks.We could even add some measures similar to those used in the follow-up survey on AI replication games, like: # of conversations in their preferred AI chatbot in the past week
+- Comment 30 (Ghina Abdul Baki 2025-06-22T20:02:36Z): I think we could control for both: general AI usage and AI usage specifically for data analysis or research tasks. It’s possible that general exposure to AI helps users develop better prompting skills, which applies to the context of data analysis.
+- Comment 4 (David Valenta 2025-06-19T15:55:33Z): I'd be interested to add: (iv) previous experience with ai (v) whether one commonly uses AI for data analysis and research. Maybe human-only participants that normally use a lot of AI get worse?
+- Comment 5 (Derek Mikola 2025-07-29T13:17:15Z): To this point, we should ask participants a handful of questions: "How many years have you used ChatGPT?", "How many hours a week do you use ChatGPT?",
+- Comment 19 (Abel Brodeur 2025-06-17T16:55:39Z): Profs will get 100% on the task. Unclear for students...
+- Comment 20 (Juan Pablo Posada Aparicio 2025-06-17T20:51:56Z): Fully agree. I thought Profs 100% and undergrads around 85%? Perhaps too generous with undergrads?
+- Comment 21 (Lenka Fiala 2025-06-17T21:04:32Z): Yeah, I think this is too generous
+- Comment 17 (Derek Mikola 2025-07-29T13:46:07Z): We should have a specific randomization laid out. I do not think this is enough.What we could do is just create a pre-assigned spreadsheet and randomize people into teams. We should discuss what we do with teams who: implode, when they are 2 versus when they are 4, etc.
+- Comment 2 (Derek Mikola 2025-07-29T13:14:16Z): This should be made explicit. I understand that we don't want to repeat everything, but let's be clearer what we'd like.
+- Comment 3 (Lenka Fiala 2025-06-17T21:00:14Z): This needs to be defined somewhere above
+- Comment 9 (Lenka Fiala 2025-06-17T21:07:21Z): The target N for P, PD and PhD might be challenging. I am not convinced these are doable if we stick to a single institution
+- Comment 33 (Derek Mikola 2025-07-29T13:42:10Z): Probably worth citing the Roth article.
+- Comment 7 (Derek Mikola 2025-07-29T13:35:08Z): What are our manipulation checks? How can we be sure?
+- Comment 6 (Lenka Fiala 2025-06-17T21:01:38Z): counts of prompts or words (how specific the prompts are)? both could work
+- Comment 26 (Derek Mikola 2025-07-29T13:35:54Z): Would we want to do anything qualitative?

@@ -45,25 +45,27 @@ sim_individuals <- function(cfg){
       team_id, game, game2, branch, software, attendance,
       number_teammates,
       max_skill, min_skill,
-      indiv_id = paste(team_id, indiv_ids, sep = "_"),
+      indiv_id = paste(team_id, indiv_ids, sep = "_")
+    ) |> 
+    mutate(
       # simple article assignment per event (3 per event)
-      article = factor(paste0(as.character(game), "_A", sample(1:3, 1))),
+      article = factor(paste0(as.character(game), "_A", sample(1:3, n(), replace = TRUE))),
       # PAP: expertise tiers (random across individuals)
-      tier = factor(sample(tiers, 1), levels = tiers),
+      tier = factor(sample(tiers, n(), replace = TRUE), levels = tiers),
       years_coding = pmax(0,
-        ifelse(tier=="UG", rnorm(1, 2, 1),
-        ifelse(tier=="MA", rnorm(1, 3.5, 1.5),
-        ifelse(tier=="PhD", rnorm(1, 5, 2),
-        ifelse(tier=="PD", rnorm(1, 6, 2), rnorm(1, 8, 3))))
+        ifelse(tier=="UG", rnorm(n(), 2, 1),
+        ifelse(tier=="MA", rnorm(n(), 3.5, 1.5),
+        ifelse(tier=="PhD", rnorm(n(), 5, 2),
+        ifelse(tier=="PD", rnorm(n(), 6, 2), rnorm(n(), 8, 3))))
       )),
-      preferred_software = factor(sample(c("R","Stata","Python"), 1), levels = c("R","Stata","Python")),
-      prior_gpt_familiarity = factor(sample(c("None","Some","Heavy"), 1), levels = c("None","Some","Heavy")),
+      preferred_software = factor(sample(c("R","Stata","Python"), n(), replace = TRUE), levels = c("R","Stata","Python")),
+      prior_gpt_familiarity = factor(sample(c("None","Some","Heavy"), n(), replace = TRUE), levels = c("None","Some","Heavy")),
       # PAP: treatment assignment 1:1 within tier (approximate at team expansion stage)
-      treatment = rbinom(1, 1, 0.5),
-      max_gpt = factor(sample(gpt_levels, 1), levels = gpt_levels),
-      min_gpt = factor(sample(gpt_levels, 1), levels = gpt_levels),
-      max_coding = factor(sample(coding_levels, 1), levels = coding_levels),
-      min_coding = factor(sample(coding_levels, 1), levels = coding_levels)
+      treatment = rbinom(n(), 1, 0.5),
+      max_gpt = factor(sample(gpt_levels, n(), replace = TRUE), levels = gpt_levels),
+      min_gpt = factor(sample(gpt_levels, n(), replace = TRUE), levels = gpt_levels),
+      max_coding = factor(sample(coding_levels, n(), replace = TRUE), levels = coding_levels),
+      min_coding = factor(sample(coding_levels, n(), replace = TRUE), levels = coding_levels)
     )
 
   # prompts/files/images/words at individual level (Poisson-ish)
@@ -102,6 +104,27 @@ sim_individuals <- function(cfg){
     reproduction_i = rbinom(n(), 1, p_rep),
     minor_errors_i = rpois(n(), lambda = cfg$error_minor_rate * (1 + (tier %in% c("UG","MA"))*0.1)),
     major_errors_i = rpois(n(), lambda = cfg$error_major_rate * (1 + (tier %in% c("UG"))*0.1))
+  )
+
+  # Referee report outcomes (human and AI assessments)
+  # Binary appropriateness (LPM target) and 0-5 scores (continuous)
+  # Human assessment: average of three judges (simulated as single scalar outcome here)
+  lin_h <- -0.5 + 0.25*(indiv$treatment==1) + 0.06*log1p(indiv$years_coding)
+  p_app_h <- plogis(lin_h)
+  ref_app_human_i  <- rbinom(nrow(indiv), 1, p_app_h)
+  ref_score_human_i <- pmin(5, pmax(0, 2.8 + 0.5*(indiv$treatment==1) + 0.1*log1p(indiv$years_coding) + rnorm(nrow(indiv), 0, 0.8)))
+
+  # AI assessment: correlated with human plus small independent noise
+  lin_ai <- lin_h + rnorm(nrow(indiv), 0, 0.2)
+  p_app_ai <- plogis(lin_ai)
+  ref_app_ai_i  <- rbinom(nrow(indiv), 1, p_app_ai)
+  ref_score_ai_i <- pmin(5, pmax(0, ref_score_human_i + rnorm(nrow(indiv), 0, 0.3)))
+
+  indiv <- indiv |> mutate(
+    referee_app_human_i  = ref_app_human_i,
+    referee_score_human_i = ref_score_human_i,
+    referee_app_ai_i     = ref_app_ai_i,
+    referee_score_ai_i   = ref_score_ai_i
   )
 
   # Robustness checks and clarity

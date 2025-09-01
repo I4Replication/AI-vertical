@@ -1,40 +1,54 @@
-\begin{table}
-\centering
-\begin{tblr}[         %% tabularray outer open
-]                     %% tabularray outer close
-{                     %% tabularray inner open
-colspec={Q[]Q[]Q[]Q[]Q[]Q[]Q[]Q[]Q[]},
-column{2,3,4,5,6,7,8,9}={}{halign=c,},
-column{1}={}{halign=l,},
-hline{20}={1,2,3,4,5,6,7,8,9}{solid, black, 0.05em},
-}                     %% tabularray inner close
-\toprule
-& Good (FE) & Good (no FE) & >=2 (FE) & >=2 (no FE) & Ran any (FE) & Ran any (no FE) & Clarity (FE) & Clarity (no FE) \\ \midrule %% TinyTableHeader
-(Intercept) & \num{0.446} & \num{0.395} & \num{0.339} & \num{0.227} & \num{0.544} & \num{0.454} & \num{2.868} & \num{2.747} \\
-& (\num{0.018}) & (\num{0.020}) & (\num{0.011}) & (\num{0.019}) & (\num{0.023}) & (\num{0.026}) & (\num{0.093}) & (\num{0.064}) \\
-years\_coding & \num{0.008} & \num{0.009} & \num{0.004} & \num{0.003} & \num{0.005} & \num{0.006} & \num{0.050} & \num{0.053} \\
-& (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) \\
-event = Ottawa & \num{-0.038} &  & \num{-0.135} &  & \num{-0.147} &  & \num{0.121} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-event = Sheffield & \num{0.045} &  & \num{-0.176} &  & \num{-0.032} &  & \num{-0.430} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-event = Cornell & \num{-0.152} &  & \num{-0.112} &  & \num{-0.138} &  & \num{-0.262} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-event = Bogota & \num{-0.017} &  & \num{-0.254} &  & \num{0.037} &  & \num{0.019} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-event = Tilburg & \num{-0.008} &  & \num{-0.058} &  & \num{-0.166} &  & \num{-0.300} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-event = Virtual & \num{-0.077} &  & \num{-0.179} &  & \num{-0.205} &  & \num{0.004} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-event = Virtual 2025 & \num{-0.133} &  & \num{-0.114} &  & \num{0.006} &  & \num{0.056} &  \\
-& (\num{0.028}) &  & (\num{0.018}) &  & (\num{0.035}) &  & (\num{0.147}) &  \\
-Num.Obs. & \num{261} & \num{261} & \num{261} & \num{261} & \num{261} & \num{261} & \num{261} & \num{261} \\
-R2 & \num{0.015} & \num{-0.000} & \num{0.019} & \num{-0.000} & \num{0.027} & \num{-0.000} & \num{0.045} & \num{-0.011} \\
-R2 Adj. & \num{-0.016} & \num{-0.004} & \num{-0.012} & \num{-0.004} & \num{-0.004} & \num{-0.004} & \num{0.015} & \num{-0.015} \\
-AIC & \num{392.4} & \num{382.4} & \num{321.2} & \num{312.4} & \num{389.7} & \num{382.7} & \num{596.0} & \num{596.8} \\
-BIC & \num{424.4} & \num{389.6} & \num{353.3} & \num{319.5} & \num{421.7} & \num{389.9} & \num{628.0} & \num{603.9} \\
-RMSE & \num{0.50} & \num{0.50} & \num{0.43} & \num{0.44} & \num{0.49} & \num{0.50} & \num{0.73} & \num{0.75} \\
-Std.Errors & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es & by: cluster\_es \\
-\bottomrule
-\end{tblr}
-\end{table}
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{6}{c}}
+\hline\hline
+ & (1) & (2) & (3) & (4) & (5) & (6)
+\\
+ & ≥1 (FE) & ≥1 (no FE) & ≥2 (FE) & ≥2 (no FE) & Ran (FE) & Ran (no FE)
+ \\
+\hline
+AI-Assisted & -0.062 & -0.073 &  0.165 &  0.104 &  0.132 &  0.185*
+\\
+ & ( 0.111) & ( 0.086) & ( 0.097) & ( 0.088) & ( 0.129) & ( 0.101)
+\\
+ & [-0.292;  0.169] & [-0.251;  0.104] & [-0.036;  0.366] & [-0.078;  0.285] & [-0.135;  0.400] & [-0.023;  0.393]
+\\
+AI × Master's &  0.433** &  0.402** & -0.054 &  0.012 &  0.059 & -0.025
+\\
+ & ( 0.203) & ( 0.189) & ( 0.174) & ( 0.180) & ( 0.232) & ( 0.198)
+\\
+ & [ 0.013;  0.852] & [ 0.011;  0.794] & [-0.413;  0.305] & [-0.360;  0.384] & [-0.421;  0.539] & [-0.434;  0.385]
+\\
+AI × PhD &  0.372 &  0.388** & -0.136 & -0.109 & -0.101 & -0.113
+\\
+ & ( 0.221) & ( 0.158) & ( 0.157) & ( 0.133) & ( 0.175) & ( 0.161)
+\\
+ & [-0.085;  0.828] & [ 0.061;  0.715] & [-0.459;  0.188] & [-0.385;  0.166] & [-0.463;  0.261] & [-0.446;  0.221]
+\\
+AI × Postdoc &  0.106 &  0.157 & -0.019 &  0.051 & -0.120 & -0.175
+\\
+ & ( 0.194) & ( 0.175) & ( 0.142) & ( 0.135) & ( 0.231) & ( 0.172)
+\\
+ & [-0.295;  0.508] & [-0.206;  0.520] & [-0.313;  0.275] & [-0.229;  0.332] & [-0.598;  0.359] & [-0.530;  0.179]
+\\
+AI × Professor &  0.208 &  0.238 & -0.157 & -0.115 & -0.113 & -0.160
+\\
+ & ( 0.183) & ( 0.156) & ( 0.153) & ( 0.150) & ( 0.172) & ( 0.173)
+\\
+ & [-0.170;  0.586] & [-0.085;  0.561] & [-0.474;  0.159] & [-0.425;  0.195] & [-0.469;  0.243] & [-0.518;  0.198]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.410 &  0.410 &  0.157 &  0.157 &  0.433 &  0.433
+\\
+p-val (Monotonic compression) &  0.760 &  0.690 &  0.782 &  0.886 &  0.510 &  0.527
+\\
+Obs. & 261 & 261 & 261 & 261 & 261 & 261
+\\
+\hline
+\hline\hline
+\multicolumn{7}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{7}{l}{Controls: Columns marked FE include event \& article FE; others omit FE; all include years, software, and prior AI familiarity.}\\
+\multicolumn{7}{l}{Compression (monotonic): one-sided p-value for increasing effects across tiers (baseline: Undergraduate).}\\
+\multicolumn{7}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

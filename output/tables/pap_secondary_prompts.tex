@@ -1,40 +1,27 @@
-\begin{table}
-\centering
-\begin{tblr}[         %% tabularray outer open
-]                     %% tabularray outer close
-{                     %% tabularray inner open
-colspec={Q[]Q[]Q[]},
-column{2,3}={}{halign=c,},
-column{1}={}{halign=l,},
-hline{20}={1,2,3}{solid, black, 0.05em},
-}                     %% tabularray inner close
-\toprule
-& AI: Success \textasciitilde{} prompts & AI: Minutes \textasciitilde{} prompts \\ \midrule %% TinyTableHeader
-(Intercept) & \num{0.372} & \num{278.182} \\
-& (\num{0.123}) & (\num{47.172}) \\
-log1p(prompts\_i) & \num{0.043} & \num{-18.012} \\
-& (\num{0.059}) & (\num{22.638}) \\
-event = Ottawa & \num{-0.088} & \num{31.853} \\
-& (\num{0.002}) & (\num{0.693}) \\
-event = Sheffield & \num{-0.002} & \num{2.667} \\
-& (\num{0.002}) & (\num{0.665}) \\
-event = Cornell & \num{0.038} & \num{-14.884} \\
-& (\num{0.001}) & (\num{0.324}) \\
-event = Bogota & \num{-0.021} & \num{5.494} \\
-& (\num{0.008}) & (\num{2.943}) \\
-event = Tilburg & \num{-0.075} & \num{28.224} \\
-& (\num{0.001}) & (\num{0.439}) \\
-event = Virtual & \num{-0.027} & \num{6.851} \\
-& (\num{0.002}) & (\num{0.854}) \\
-event = Virtual 2025 & \num{-0.081} & \num{28.574} \\
-& (\num{0.002}) & (\num{0.904}) \\
-Num.Obs. & \num{261} & \num{261} \\
-R2 & \num{0.011} & \num{0.010} \\
-R2 Adj. & \num{-0.020} & \num{-0.021} \\
-AIC & \num{388.1} & \num{3506.1} \\
-BIC & \num{420.2} & \num{3538.2} \\
-RMSE & \num{0.49} & \num{193.11} \\
-Std.Errors & by: cluster\_es & by: cluster\_es \\
-\bottomrule
-\end{tblr}
-\end{table}
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{2}{c}}
+\hline\hline
+ & (1) & (2)
+\\
+ & Success (prompts) & Minutes (prompts)
+ \\
+\hline
+log(1+prompts) &  0.029 & -12.910
+\\
+ & ( 0.094) & ( 36.714)
+\\
+ & [-0.166;  0.224] & [-88.859;  63.038]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.421 &  254.125
+\\
+Obs. & 133 & 133
+\\
+\hline
+\hline\hline
+\multicolumn{3}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{3}{l}{Controls: Event \& article FE; years of coding; software; prior AI familiarity (AI arm only).}\\
+\multicolumn{3}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

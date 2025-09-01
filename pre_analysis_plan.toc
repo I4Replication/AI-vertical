@@ -1,0 +1,16 @@
+\contentsline {section}{\numberline {1}Abstract}{1}{section.1}%
+\contentsline {section}{\numberline {2}Registration and Funding}{2}{section.2}%
+\contentsline {section}{\numberline {3}Background and Rationale}{2}{section.3}%
+\contentsline {section}{\numberline {4}Research Questions and Hypotheses}{2}{section.4}%
+\contentsline {section}{\numberline {5}Experimental Design}{2}{section.5}%
+\contentsline {section}{\numberline {6}Outcomes and Measurement}{3}{section.6}%
+\contentsline {section}{\numberline {7}Controls (Covariates and Stratification)}{5}{section.7}%
+\contentsline {section}{\numberline {8}Balance by Arm}{6}{section.8}%
+\contentsline {section}{\numberline {9}Descriptive by Arm (Branches)}{7}{section.9}%
+\contentsline {section}{\numberline {10}Statistical Analysis Plan}{8}{section.10}%
+\contentsline {section}{\numberline {11}Results}{9}{section.11}%
+\contentsline {section}{\numberline {12}Data Management, Documentation, and Ethics}{11}{section.12}%
+\contentsline {section}{\numberline {13}Timeline and Deliverables}{11}{section.13}%
+\contentsline {section}{\numberline {14}Limitations}{11}{section.14}%
+\contentsline {section}{\numberline {15}Appendix}{12}{section.15}%
+\contentsline {section}{\numberline {16}References}{13}{section.16}%
