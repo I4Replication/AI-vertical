@@ -8,17 +8,30 @@ suppressPackageStartupMessages({
 })
 
 # ----- AI-paper table helpers (classic tabular) -----
-fmt3 <- function(x) { if (is.na(x) || is.null(x)) return(""); sprintf("% .3f", x) }
+fmt3 <- function(x) { if (is.na(x) || is.null(x)) return("—"); sprintf("% .3f", x) }
 star_sym <- function(p) { if (is.na(p)) return(""); if (p < 0.01) "***" else if (p < 0.05) "**" else if (p < 0.10) "*" else "" }
 coef_stats <- function(m, term) {
   tt <- tryCatch(broom::tidy(m, conf.int = TRUE), error = function(e) NULL)
   if (is.null(tt)) return(list(est=NA,se=NA,p=NA,lwr=NA,upr=NA))
+  # exact match
   row <- tt[tt$term == term, , drop = FALSE]
+  # try reversed interaction order
   if (nrow(row) == 0 && grepl(':', term, fixed = TRUE)) {
-    # try reversed interaction order
     parts <- strsplit(term, ':', fixed = TRUE)[[1]]
     term2 <- paste(rev(parts), collapse = ':')
     row <- tt[tt$term == term2, , drop = FALSE]
+  }
+  # robust fallback: allow any non-alphanumeric separator and order-insensitive matching
+  if (nrow(row) == 0 && grepl(':', term, fixed = TRUE)) {
+    req <- tolower(strsplit(term, ':', fixed = TRUE)[[1]])
+    req <- trimws(req)
+    tokenise <- function(x) unique(trimws(strsplit(tolower(x), "[^A-Za-z0-9_]+")[[1]]))
+    has_all <- function(trm) {
+      toks <- tokenise(trm)
+      all(req %in% toks)
+    }
+    idx <- which(vapply(tt$term, has_all, logical(1)))
+    if (length(idx) >= 1) row <- tt[idx[1], , drop = FALSE]
   }
   if (nrow(row) == 0) return(list(est=NA,se=NA,p=NA,lwr=NA,upr=NA))
   list(est = row$estimate[[1]], se = row$std.error[[1]], p = row$p.value[[1]], lwr = row$conf.low[[1]], upr = row$conf.high[[1]])
@@ -67,7 +80,7 @@ p_monotonic_tier <- function(m) {
   if (any(is.na(c(p1,p2,p3)))) return(NA_real_)
   max(p1,p2,p3)
 }
-write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','usage','learn','prompts'),
+write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','usage','learn','prompts','ood'),
                            controls_desc = 'Event & article FE; years of coding; software; prior AI familiarity.',
                            dep_means = NULL) {
   coef_mode <- match.arg(coef_mode)
@@ -91,6 +104,9 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
   } else if (coef_mode == 'software') {
     keep <- c('treatment','software3R','software3Python','treatment:software3R','treatment:software3Python')
     labels <- c('AI-Assisted','R','Python','AI × R','AI × Python')
+  } else if (coef_mode == 'ood') {
+    keep <- c('treatment','treatment:out_of_disc_i')
+    labels <- c('AI-Assisted','AI × Outside-discipline')
   }
   lines <- c()
   lines <- c(lines, '\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}')
@@ -103,11 +119,16 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
   for (i in seq_along(keep)) {
     lab <- labels[[i]]
     ests <- se_line <- ci_line <- character(K)
+    dbg_vals <- c()
     for (j in seq_len(K)) {
       s <- coef_stats(models[[j]], keep[[i]])
-      ests[[j]] <- if (is.na(s$est)) '' else sprintf('%s%s', fmt3(s$est), star_sym(s$p))
+      ests[[j]] <- if (is.na(s$est)) '—' else sprintf('%s%s', fmt3(s$est), star_sym(s$p))
       se_line[[j]] <- if (is.na(s$se)) '' else sprintf('(%s)', fmt3(s$se))
       ci_line[[j]] <- if (is.na(s$lwr) || is.na(s$upr)) '' else sprintf('[%s; %s]', fmt3(s$lwr), fmt3(s$upr))
+      dbg_vals <- c(dbg_vals, if (is.na(s$est)) NA else s$est)
+    }
+    if (coef_mode == 'ood' && grepl('Outside', lab)) {
+      try({ writeLines(paste('OOD row ests:', paste(dbg_vals, collapse=',')), 'output/tables/pap_horizontal_debug.txt', append=FALSE) }, silent=TRUE)
     }
     lines <- c(lines, paste(c(lab, ests), collapse=' & '), '\\\\')
     lines <- c(lines, paste(c('', se_line), collapse=' & '), '\\\\')
@@ -170,6 +191,34 @@ ind <- ind %>%
     event_order = as.integer(factor(event, levels = unique(event)))
   )
 
+# Horizontal dimension: participant/task disciplines and outside-of-discipline flag
+# If disciplines are missing or degenerate in the synthetic data, generate placeholders for illustration
+set.seed(12345)
+if (!('participant_discipline' %in% names(ind)) ||
+    length(unique(stats::na.omit(ind$participant_discipline))) <= 1) {
+  ind$participant_discipline <- sample(c('Economics','Political Science','Psychology'),
+                                       nrow(ind), replace = TRUE, prob = c(0.50, 0.25, 0.25))
+}
+if (!('task_discipline' %in% names(ind)) ||
+    length(unique(stats::na.omit(ind$task_discipline))) <= 1) {
+  arts <- unique(as.character(ind$article))
+  art_map <- setNames(sample(c('Economics','Political Science','Psychology'),
+                             length(arts), replace = TRUE), arts)
+  ind$task_discipline <- art_map[as.character(ind$article)]
+}
+ind <- ind %>% mutate(
+  participant_discipline = factor(participant_discipline, levels = c('Economics','Political Science','Psychology')),
+  task_discipline = factor(task_discipline, levels = c('Economics','Political Science','Psychology')),
+  out_of_disc_i = as.integer(!is.na(participant_discipline) & !is.na(task_discipline) & participant_discipline != task_discipline)
+)
+# Debug: write OOD variation summary
+try({
+  dir.create("output/tables", showWarnings = FALSE, recursive = TRUE)
+  ood_tab <- table(ind$out_of_disc_i, useNA = 'ifany')
+  writeLines(c("out_of_disc_i counts:", paste(names(ood_tab), as.integer(ood_tab))),
+             "output/tables/pap_ood_counts.txt")
+}, silent = TRUE)
+
 # Outcomes
 y_success   <- ind$reproduction_i
 y_minutes   <- ind$minutes_to_success_i
@@ -201,6 +250,36 @@ write_ai_table(
   controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
 )
 
+# Horizontal compression: add AI × Outside-discipline interaction (parallel to vertical tables)
+if (TRUE) {
+  f_ols_h <- reproduction_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_min_h <- minutes_to_success_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_pmn_h <- minor_errors_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_pmj_h <- major_errors_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  m_success_h <- feols(f_ols_h, data = ind, vcov = ~cluster_es)
+  m_minutes_h <- feols(f_min_h, data = ind, vcov = ~cluster_es)
+  m_minor_h   <- fepois(f_pmn_h, data = ind, vcov = ~cluster_es)
+  m_major_h   <- fepois(f_pmj_h, data = ind, vcov = ~cluster_es)
+  # Debug: write term names for inspection
+  tt_dbg <- tryCatch(broom::tidy(m_success_h), error=function(e) NULL)
+  if (!is.null(tt_dbg)) {
+    dir.create("output/tables", showWarnings = FALSE, recursive = TRUE)
+    writeLines(paste(tt_dbg$term, collapse='\n'), "output/tables/pap_horizontal_terms.txt")
+  }
+  f_good_h <- good_checks_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_two_h  <- two_good_checks_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  m_good_h <- feols(f_good_h, data = ind, vcov = ~cluster_es)
+  m_two_h  <- feols(f_two_h,  data = ind, vcov = ~cluster_es)
+  write_ai_table(
+    models = list(m_success_h, m_minutes_h, m_minor_h, m_major_h, m_good_h, m_two_h),
+    col_titles = c("Reproduction", "Minutes", "Minor", "Major", "At least 1 check", "At least 2 checks"),
+    file = "output/tables/pap_main_horizontal.tex",
+    coef_mode = "ood",
+    controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
+  )
+
+}
+
 # Referee report outcomes (human and AI assessments)
 f_ref_app_h  <- referee_app_human_i  ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
 f_ref_score_h<- referee_score_human_i~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
@@ -219,6 +298,25 @@ write_ai_table(
   coef_mode = "tier",
   controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
 )
+
+# Horizontal: referee outcomes with AI × OOD
+if (TRUE) {
+  f_ref_app_h_o   <- referee_app_human_i   ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_ref_score_h_o <- referee_score_human_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_ref_app_ai_o  <- referee_app_ai_i      ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  f_ref_score_ai_o<- referee_score_ai_i    ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+  m_ref_app_h_o    <- feols(f_ref_app_h_o,    data = ind, vcov = ~cluster_es)
+  m_ref_score_h_o  <- feols(f_ref_score_h_o,  data = ind, vcov = ~cluster_es)
+  m_ref_app_ai_o   <- feols(f_ref_app_ai_o,   data = ind, vcov = ~cluster_es)
+  m_ref_score_ai_o <- feols(f_ref_score_ai_o, data = ind, vcov = ~cluster_es)
+  write_ai_table(
+    models = list(m_ref_app_h_o, m_ref_score_h_o, m_ref_app_ai_o, m_ref_score_ai_o),
+    col_titles = c("Appropriate (human)", "Score (human)", "Appropriate (AI)", "Score (AI)"),
+    file = "output/tables/pap_referee_horizontal.tex",
+    coef_mode = "ood",
+    controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
+  )
+}
 
 # Referee by years (appendix): replace tier with years × AI
 f_ref_app_h_y   <- referee_app_human_i   ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)

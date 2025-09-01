@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  1 SEP 2025 09:55
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  1 SEP 2025 12:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -956,26 +956,26 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 ) [1
 
-]
-Missing character: There is no ≈ (U+2248) in font [lmroman10-regular]:mapping=t
-ex-text;!
-Missing character: There is no ≈ (U+2248) in font [lmroman10-regular]:mapping=t
-ex-text;!
+] [2]
 Missing character: There is no α (U+03B1) in font [lmroman10-regular]:mapping=t
 ex-text;!
-[2]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.0pt on input line 236.
+(Font)              scaled to size 5.0pt on input line 270.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.00046pt on input line 236.
+(Font)              scaled to size 5.00046pt on input line 270.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 4.99947pt on input line 236.
+(Font)              scaled to size 4.99947pt on input line 270.
 
-Overfull \hbox (7.88173pt too wide) in alignment at lines 278--307
+Overfull \hbox (31.63702pt too wide) in paragraph at lines 270--294
+ [][] 
+ []
+
+[3]
+Overfull \hbox (7.88173pt too wide) in alignment at lines 336--365
  [] [] [] [] 
  []
 
-[3] [4]
+[4] [5]
 File: output/figures_sanitized/reproduction_rates_raw_.pdf Graphic file (type p
 df)
 <use output/figures_sanitized/reproduction_rates_raw_.pdf>
@@ -988,45 +988,47 @@ File: output/figures_sanitized/minor_errors_raw_.pdf Graphic file (type pdf)
 File: pre_analysis_plan_files/figure-latex/fig-km-1.pdf Graphic file (type pdf)
 
 <use pre_analysis_plan_files/figure-latex/fig-km-1.pdf>
-[5]
+[6]
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[6]
+[7]
+Missing character: There is no α (U+03B1) in font [lmroman10-regular]:mapping=t
+ex-text;!
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 435.
+(Font)              scaled to size 7.665pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 435.
+(Font)              scaled to size 5.475pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 435.
+(Font)              scaled to size 10.95099pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 435.
+(Font)              scaled to size 7.66568pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 435.
+(Font)              scaled to size 5.4755pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 435.
+(Font)              scaled to size 10.94882pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 435.
+(Font)              scaled to size 7.66417pt on input line 519.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 435.
-[7] [8]
+(Font)              scaled to size 5.47441pt on input line 519.
+[8] [9] [10]
 Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
 ex-text;!
 Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
 ex-text;!
-[9]
+[11] [12]
 Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
 ex-text;!
 Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
 ex-text;!
-[10] [11] [12] (./pre_analysis_plan.aux) ) 
+[13] [14] [15] (./pre_analysis_plan.aux) ) 
 Here is how much of TeX's memory you used:
- 21566 strings out of 476683
- 398404 string characters out of 5804047
- 1882018 words of memory out of 5000000
- 41445 multiletter control sequences out of 15000+600000
+ 21569 strings out of 476683
+ 398467 string characters out of 5804047
+ 1879018 words of memory out of 5000000
+ 41448 multiletter control sequences out of 15000+600000
  519833 words of font info for 95 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 86i,13n,121p,1014b,445s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 86i,13n,121p,1014b,452s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on pre_analysis_plan.pdf (12 pages).
+Output written on pre_analysis_plan.pdf (15 pages).

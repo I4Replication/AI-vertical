@@ -1,0 +1,33 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{6}{c}}
+\hline\hline
+ & (1) & (2) & (3) & (4) & (5) & (6)
+\\
+ & Reproduction & Minutes & Minor & Major & At least 1 check & At least 2 checks
+ \\
+\hline
+AI-Assisted & -0.131 &  44.313 &  0.786** &  0.380 &  0.135 &  0.129
+\\
+ & ( 0.122) & ( 47.343) & ( 0.349) & ( 0.494) & ( 0.117) & ( 0.088)
+\\
+ & [-0.384;  0.123] & [-53.623;  142.248] & [ 0.102;  1.469] & [-0.587;  1.348] & [-0.107;  0.377] & [-0.053;  0.311]
+\\
+AI × Outside-discipline &  0.162 & -60.246 & -1.256*** & -0.625 &  0.061 & -0.069
+\\
+ & ( 0.170) & ( 65.944) & ( 0.439) & ( 0.825) & ( 0.134) & ( 0.129)
+\\
+ & [-0.189;  0.514] & [-196.662;  76.170] & [-2.117; -0.396] & [-2.242;  0.992] & [-0.217;  0.339] & [-0.335;  0.197]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.444 &  247.101 &  0.421 &  0.176 &  0.410 &  0.157
+\\
+Obs. & 261 & 261 & 261 & 261 & 261 & 261
+\\
+\hline
+\hline\hline
+\multicolumn{7}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{7}{l}{Controls: Event \& article FE; years of coding; software; prior AI familiarity.}\\
+\multicolumn{7}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

@@ -1,0 +1,36 @@
+(Intercept)
+treatment
+out_of_disc_i
+tierMA
+tierPhD
+tierPD
+tierP
+years_coding
+software3Stata
+software3Python
+prior_gpt_familiaritySome
+prior_gpt_familiarityHeavy
+event::Ottawa
+event::Sheffield
+event::Cornell
+event::Bogota
+event::Tilburg
+event::Virtual
+event::Virtual 2025
+article::Bogota_A2
+article::Bogota_A3
+article::Cornell_A1
+article::Cornell_A2
+article::Ottawa_A1
+article::Ottawa_A2
+article::Sheffield_A1
+article::Sheffield_A2
+article::Tilburg_A1
+article::Tilburg_A2
+article::Toronto_A1
+article::Toronto_A2
+article::Virtual 2025_A1
+article::Virtual 2025_A2
+article::Virtual_A1
+article::Virtual_A2
+treatment:out_of_disc_i
