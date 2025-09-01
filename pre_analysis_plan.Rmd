@@ -845,9 +845,9 @@ We will publish de-identified participant-level data, code, and grading rubrics 
 
 # Timeline and Deliverables
 
-We plan five one‑day events across partner institutions within the academic year. Each event follows the same protocol: pre‑generated randomization within tiers, a standardized onboarding for the AI arm, and a seven‑hour work window. We lock randomization and materials ahead of time and document any deviations (no‑shows, substitutions) prior to analysis.
+We plan six one‑day events across partner institutions within the academic year. Each event follows the same protocol: pre‑generated randomization within tiers, a standardized onboarding for the AI arm, and a seven‑hour work window. We lock randomization and materials ahead of time and document any deviations (no‑shows, substitutions) prior to analysis.
 
-After the fifth event, we finalize the preregistration lock and freeze all code paths before accessing outcome data. The analysis phase proceeds in two stages. First, we produce the pre‑specified main results and figures, checking internal coherence and documenting data lineage. Second, we generate the pre‑specified secondary and appendix tables to illuminate mechanisms and robustness. All outputs are cross‑validated against the preregistered estimands and data checks.
+After the sixth event, we finalize the preregistration lock and freeze all code paths before accessing outcome data. The analysis phase proceeds in two stages. First, we produce the pre‑specified main results and figures, checking internal coherence and documenting data lineage. Second, we generate the pre‑specified secondary and appendix tables to illuminate mechanisms and robustness. All outputs are cross‑validated against the preregistered estimands and data checks.
 
 Deliverables include a public replication archive (de‑identified individual‑level data, code, and grading rubrics), a pre‑analysis report that summarizes the locked design and main estimands, and a manuscript integrating results and interpretation. We aim to share preliminary results with partners quickly after the final event and proceed to manuscript submission once the replication archive is complete.
 

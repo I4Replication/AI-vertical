@@ -1,6 +1,6 @@
 AI Vertical (Synthetic Individual-Level) — Analysis Pipeline
 
-This project implements an individual‑level analysis pipeline aligned with the PAP “Reproducing with AI Across the Expertise Ladder.” The unit of observation is the individual. We simulate individual data and analyze treatment effects of ChatGPT+ on outcomes and gaps across expertise tiers; all outputs, tables, and figures are computed at the individual level.
+This project implements an individual‑level analysis pipeline aligned with the PAP “Reproducing with AI Across the Expertise Ladder.” The unit of observation is the individual. We simulate individual data and analyze treatment effects of ChatGPT+ on outcomes and gaps across expertise tiers; all outputs, tables, and figures are computed at the individual level. X‑axis labels for event‑indexed figures now use generic “Game 1–5” ticks to reflect the five‑game design in the PAP.
 
 
 ## Overview
@@ -18,6 +18,7 @@ This project implements an individual‑level analysis pipeline aligned with the
   - `pap_analyses.R`: Main and secondary regressions specified in the PAP, plus KM plot.
 - `R/`
   - `simulate_individuals.R`: Synthetic individual generator (and legacy aggregation helpers, unused by default).
+  - `reproduction rates.R`: Generates reproduction and error figures used as mock‑ups in the PAP.
 - `config/`
   - `config.yml`: Parameters that govern the simulation and labeling.
 - `data/`
@@ -95,6 +96,13 @@ Key parameters you can tune:
 Edit `config.yml` to change data characteristics, then re‑run the master script.
 
 
+## PAP Document
+- Source: `pre_analysis_plan.Rmd` (renders to `pre_analysis_plan.pdf`).
+- Rendering: Knit in RStudio or run `rmarkdown::render('pre_analysis_plan.Rmd')` from R.
+- Figures: The Rmd includes existing mock‑ups from `output/figures`; it creates sanitized copies in `output/figures_sanitized` for LaTeX.
+- Labels: Event‑indexed figures use generic `Game 1` … `Game 5` ticks (non‑mapped events are omitted).
+
+
 ## Data Flow
 1. Simulation (`cleaning.R` + `R/simulate_individuals.R`)
    - Simulates individual records across events, tiers, and software.
@@ -116,6 +124,7 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
 
 ## Outputs Produced
 - Figures (`output/figures/`):
+  - `reproduction rates (raw).pdf`, `major errors (raw).pdf`, `minor errors (raw).pdf` (levels, by branch)
   - `prompt distribution.pdf`
   - `wordcloud_focus_groups.png`, `markov_words_focus_groups.png`, `markov_bigrams_focus_groups.png`
   - `pap_km_success.pdf`
@@ -153,6 +162,7 @@ These PNGs render directly in most viewers; PDF figures are in `output/figures`.
 
 ## Provenance
 - This project implements an individual‑level PAP. Earlier references to team-level outputs have been removed.
+- X‑axis labels on event‑indexed figures updated to generic “Game 1–5” to match the preregistered scope.
 
 ## PAP Outputs Index
 

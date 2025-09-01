@@ -1,3 +1,7 @@
+suppressPackageStartupMessages({
+  library(dplyr); library(tidyr); library(ggplot2); library(scales)
+})
+
 # --- 1. Load data ---
 main <- readRDS("data/AI games.rds")
 
@@ -30,22 +34,24 @@ df_wide <- df_wide %>%
     major_cyorg   = `major_errorsHuman-Only` - `major_errorsAI-Assisted`
   )
 
-# --- 5. Labels for the x-axis ---
+# --- 5. Labels for the x-axis (generic five-game design) ---
+# Only the first five events are labeled; others drop (NA) in plots
 game2_labels <- c(
-  "Toronto" = "Toronto\n(Feb)",
-  "Ottawa" = "Ottawa\n(May)",
-  "Sheffield" = "Sheffield\n(Jun)",
-  "Cornell" = "Cornell\n(Aug)",
-  "Bogota" = "Bogota\n(Oct)",
-  "Tilburg" = "Tilburg\n(Oct)",
-  "Virtual" = "Virtual\n(Nov)",
-  "Virtual 2025" = "Virtual\n(2025)"
+  "Toronto" = "Game 1",
+  "Ottawa" = "Game 2",
+  "Sheffield" = "Game 3",
+  "Cornell" = "Game 4",
+  "Bogota" = "Game 5"
 )
 df_wide$game2 <- factor(
   as.character(df_wide$game2),
   levels = names(game2_labels),
   labels = unname(game2_labels)
 )
+df_wide$game2 <- as.character(df_wide$game2)
+df_wide$game2[is.na(df_wide$game2)] <- "Game 6"
+df_wide$game2 <- factor(df_wide$game2,
+                        levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
 
 # --- 6. Reproduction plot ---
 p1 <- ggplot(df_wide, aes(x = game2)) +
@@ -72,7 +78,7 @@ ggsave("output/figures/reproduction rates.pdf", p1, width = 8, height = 4)
 
 
 p1_s1 <- ggplot(
-  df_wide %>% filter(game2 != "Virtual\n(2025)"),
+  df_wide %>% filter(!is.na(game2)),
   aes(x = game2)
 ) +
   geom_line(aes(y = rep_machine, group = 1, color = "Human-Only Vs AI-Led"), size = 1.2) +
@@ -120,7 +126,7 @@ ggsave("output/figures/minor errors.pdf", p2, width = 8, height = 4)
 
 
 p2_s1 <- ggplot(
-  df_wide %>% filter(game2 != "Virtual\n(2025)"),
+  df_wide %>% filter(!is.na(game2)),
   aes(x = game2)
 ) +
   geom_line(aes(y = minor_machine, group = 1, color = "Human-Only Vs AI-Led"), size = 1.2) +
@@ -167,7 +173,7 @@ ggsave("output/figures/major errors.pdf", p3, width = 8, height = 4)
 
 
 p3_s1 <- ggplot(
-  df_wide %>% filter(game2 != "Virtual\n(2025)"),
+  df_wide %>% filter(!is.na(game2)),
   aes(x = game2)
 ) +
   geom_line(aes(y = major_machine, group = 1, color = "Human-Only Vs AI-Led"), size = 1.2) +
@@ -196,6 +202,10 @@ df_summary$game2 <- factor(
   levels = names(game2_labels),
   labels = unname(game2_labels)
 )
+df_summary$game2 <- as.character(df_summary$game2)
+df_summary$game2[is.na(df_summary$game2)] <- "Game 6"
+df_summary$game2 <- factor(df_summary$game2,
+                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
 
 # --- B. Ensure tidy branch labels and colours -----------------
 df_summary$branch <- factor(
@@ -232,7 +242,7 @@ ggsave("output/figures/reproduction rates (raw).pdf",
        p1_raw, width = 8, height = 4)
 
 p1_raw_s1 <- make_raw_plot(
-  df_summary %>% filter(game2 != "Virtual\n(2025)"),
+  df_summary %>% filter(!is.na(game2)),
   yvar  = "reproduction",
   ylab  = "Reproduction rate",
   percent = TRUE
@@ -248,7 +258,7 @@ ggsave("output/figures/minor errors (raw).pdf",
        p2_raw, width = 8, height = 4)
 
 p2_raw_s1 <- make_raw_plot(
-  df_summary %>% filter(game2 != "Virtual\n(2025)"),
+  df_summary %>% filter(!is.na(game2)),
   yvar = "minor_errors",
   ylab = "Number of minor errors")
 ggsave("output/figures/minor errors (raw, s1).pdf",
@@ -262,7 +272,7 @@ ggsave("output/figures/major errors (raw).pdf",
        p3_raw, width = 8, height = 4)
 
 p3_raw_s1 <- make_raw_plot(
-  df_summary %>% filter(game2 != "Virtual\n(2025)"),
+  df_summary %>% filter(!is.na(game2)),
   yvar = "major_errors",
   ylab = "Number of major errors")
 ggsave("output/figures/major errors (raw, s1).pdf",

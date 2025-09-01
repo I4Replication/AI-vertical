@@ -48,24 +48,31 @@ df_wide <- df_summary |>
     major_diff = .data[["major_errors__Human-Only"]]  - .data[["major_errors__AI-Assisted"]]
   )
 
-# ---- 4. Etiquetas bonitas para el eje X ----------------------------------------
+# ---- 4. Etiquetas genéricas para el eje X (5 juegos) ---------------------------
+# Solo se etiquetan los cinco primeros eventos; el resto cae (NA) en las gráficas
 game2_labels <- c(
-  "Toronto"      = "Toronto\n(Feb)",
-  "Ottawa"       = "Ottawa\n(May)",
-  "Sheffield"    = "Sheffield\n(Jun)",
-  "Cornell"      = "Cornell\n(Aug)",
-  "Bogota"       = "Bogota\n(Oct)",
-  "Tilburg"      = "Tilburg\n(Oct)",
-  "Virtual"      = "Virtual\n(Nov)",   # EU + NA 2024
-  "Virtual_2025" = "Virtual\n(2025)"
+  "Toronto"      = "Game 1",
+  "Ottawa"       = "Game 2",
+  "Sheffield"    = "Game 3",
+  "Cornell"      = "Game 4",
+  "Bogota"       = "Game 5"
 )
 
 df_wide$game2    <- factor(df_wide$game2,
                            levels = names(game2_labels),
                            labels = unname(game2_labels))
+df_wide$game2    <- as.character(df_wide$game2)
+df_wide$game2[is.na(df_wide$game2)] <- "Game 6"
+df_wide$game2    <- factor(df_wide$game2,
+                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
+
 df_summary$game2 <- factor(df_summary$game2,
                            levels = names(game2_labels),
                            labels = unname(game2_labels))
+df_summary$game2 <- as.character(df_summary$game2)
+df_summary$game2[is.na(df_summary$game2)] <- "Game 6"
+df_summary$game2 <- factor(df_summary$game2,
+                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
 
 # ---- 5. Colores y helpers -------------------------------------------------------
 cols <- c("Human-Only vs AI-Assisted" = "#D55E00")

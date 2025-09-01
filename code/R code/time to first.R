@@ -9,20 +9,21 @@ dir.create("output/figures", showWarnings = FALSE, recursive = TRUE)
 
 main <- readRDS("data/AI games.rds")
 
-# Prepare labels for games
+# Prepare generic labels for the first five games
+# Anything beyond these five will be set to NA and dropped by ggplot
 game2_labels <- c(
-  "Toronto" = "Toronto\n(Feb)",
-  "Ottawa" = "Ottawa\n(May)",
-  "Sheffield" = "Sheffield\n(Jun)",
-  "Cornell" = "Cornell\n(Aug)",
-  "Bogota" = "Bogota\n(Oct)",
-  "Tilburg" = "Tilburg\n(Oct)",
-  "Virtual" = "Virtual\n(Nov)",
-  "Virtual 2025" = "Virtual\n(2025)"
+  "Toronto" = "Game 1",
+  "Ottawa" = "Game 2",
+  "Sheffield" = "Game 3",
+  "Cornell" = "Game 4",
+  "Bogota" = "Game 5"
 )
 
 to_label <- function(x){
-  factor(as.character(x), levels = names(game2_labels), labels = unname(game2_labels))
+  y <- factor(as.character(x), levels = names(game2_labels), labels = unname(game2_labels))
+  z <- as.character(y)
+  z[is.na(z)] <- "Game 6"
+  factor(z, levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
 }
 
 # Helper to create line plots by branch for a given y variable
@@ -60,7 +61,9 @@ ggsave("output/figures/time2_first_minor.pdf",  p_minor,  width = 8, height = 4)
 ggsave("output/figures/time2_reproduction.pdf", p_reprod, width = 8, height = 4)
 
 # Subset excluding Virtual 2025
-summ_s1 <- summ_by_game_branch %>% filter(game2 != "Virtual\n(2025)")
+# Subset to the five-game design (drop any non-mapped games)
+# Subset to the five-game design (now including placeholder Game 6)
+summ_s1 <- summ_by_game_branch
 
 p_major_s1  <- make_plot(summ_s1, "time2_first_major",  "Time to first major error (min)")
 p_minor_s1  <- make_plot(summ_s1, "time2_first_minor",  "Time to first minor error (min)")
@@ -69,4 +72,3 @@ p_reprod_s1 <- make_plot(summ_s1, "time2_reproduction", "Time to reproduction (m
 ggsave("output/figures/time2_first_major (s1).pdf",  p_major_s1,  width = 8, height = 4)
 ggsave("output/figures/time2_first_minor (s1).pdf",  p_minor_s1,  width = 8, height = 4)
 ggsave("output/figures/time2_reproduction (s1).pdf", p_reprod_s1, width = 8, height = 4)
-
