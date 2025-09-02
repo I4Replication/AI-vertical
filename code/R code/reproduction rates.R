@@ -207,17 +207,19 @@ df_summary$game2[is.na(df_summary$game2)] <- "Game 6"
 df_summary$game2 <- factor(df_summary$game2,
                            levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
 
-# --- B. Ensure tidy branch labels and colours -----------------
+# --- B. Ensure tidy branch labels and colours (PAP: two-arm only) --
+# Filter out AI-Led for PAP figures and standardize palette to two colors
+df_summary <- df_summary %>% filter(branch %in% c("Human-Only","AI-Assisted"))
 df_summary$branch <- factor(
   df_summary$branch,
-  levels = c("Human-Only", "AI-Assisted", "AI-Led")
+  levels = c("Human-Only", "AI-Assisted")
 )
-branch_cols <- c("Human-Only"   = "#009E73",
-                 "AI-Assisted"  = "#D55E00",
-                 "AI-Led"       = "#0072B2")
+branch_cols <- c("Human-Only"   = "#333333",
+                 "AI-Assisted"  = "#1f77b4")
 
 # --- C. Helper: one function to avoid repetition --------------
 make_raw_plot <- function(data, yvar, ylab, percent = FALSE) {
+  data <- data %>% filter(branch %in% c("Human-Only","AI-Assisted"))
   ggplot(data, aes(x = game2, y = .data[[yvar]],
                    group = branch, colour = branch)) +
     geom_line(size = 1.2) +
