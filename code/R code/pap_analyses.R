@@ -93,14 +93,14 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
     keep <- c('treatment','years_coding:treatment')
     labels <- c('AI-Assisted','AI × Years of coding')
   } else if (coef_mode == 'usage') {
-    keep <- c('log1p(prompts_i)','log1p(files_i)','log1p(images_i)','log1p(words_i)')
-    labels <- c('log(1+prompts)','log(1+files)','log(1+images)','log(1+words)')
+    keep <- c('asinh(prompts_i)','asinh(files_i)','asinh(images_i)','asinh(words_i)')
+    labels <- c('asinh(prompts)','asinh(files)','asinh(images)','asinh(words)')
   } else if (coef_mode == 'learn') {
     keep <- c('treatment','treatment:event_order')
     labels <- c('AI-Assisted','AI × Event order')
   } else if (coef_mode == 'prompts') {
-    keep <- c('log1p(prompts_i)')
-    labels <- c('log(1+prompts)')
+    keep <- c('asinh(prompts_i)')
+    labels <- c('asinh(prompts)')
   } else if (coef_mode == 'software') {
     keep <- c('treatment','software3R','software3Python','treatment:software3R','treatment:software3Python')
     labels <- c('AI-Assisted','R','Python','AI × R','AI × Python')
@@ -281,55 +281,68 @@ if (TRUE) {
 }
 
 # Referee report outcomes (human and AI assessments)
-f_ref_app_h  <- referee_app_human_i  ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-f_ref_score_h<- referee_score_human_i~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-f_ref_app_ai <- referee_app_ai_i     ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-f_ref_score_ai<-referee_score_ai_i   ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
+referee_vars_h <- c(
+  "referee_app_human_i"              = "Appropriate (human)",
+  "referee_summary_human_i"          = "Summary 0–5 (human)",
+  "referee_literature_human_i"       = "Literature 0–5 (human)",
+  "referee_weakness_human_i"         = "Weakness 0–5 (human)",
+  "referee_recommendations_human_i"  = "Recommendations 0–5 (human)",
+  "referee_clarity_human_i"          = "Clarity 0–5 (human)",
+  "referee_overall_human_i"          = "Overall 0–5 (human)"
+)
+referee_vars_ai <- c(
+  "referee_app_ai_i"                 = "Appropriate (AI)",
+  "referee_summary_ai_i"             = "Summary 0–5 (AI)",
+  "referee_literature_ai_i"          = "Literature 0–5 (AI)",
+  "referee_weakness_ai_i"            = "Weakness 0–5 (AI)",
+  "referee_recommendations_ai_i"     = "Recommendations 0–5 (AI)",
+  "referee_clarity_ai_i"             = "Clarity 0–5 (AI)",
+  "referee_overall_ai_i"             = "Overall 0–5 (AI)"
+)
+fallback_h <- if ("referee_score_human_i" %in% names(ind)) ind$referee_score_human_i else rep(0, nrow(ind))
+fallback_ai <- if ("referee_score_ai_i" %in% names(ind)) ind$referee_score_ai_i else rep(0, nrow(ind))
+for (nm in setdiff(names(referee_vars_h), names(ind))) ind[[nm]] <- fallback_h
+for (nm in setdiff(names(referee_vars_ai), names(ind))) ind[[nm]] <- fallback_ai
 
-m_ref_app_h   <- feols(f_ref_app_h,   data = ind, vcov = ~cluster_es)
-m_ref_score_h <- feols(f_ref_score_h, data = ind, vcov = ~cluster_es)
-m_ref_app_ai  <- feols(f_ref_app_ai,  data = ind, vcov = ~cluster_es)
-m_ref_score_ai<- feols(f_ref_score_ai,data = ind, vcov = ~cluster_es)
+mk_formula <- function(dep, rhs) stats::as.formula(paste(dep, "~", rhs))
+fit_referee_models <- function(dep_vars, rhs) {
+  lapply(names(dep_vars), function(dep) feols(mk_formula(dep, rhs), data = ind, vcov = ~cluster_es))
+}
 
+titles_referee <- c(unname(referee_vars_h), unname(referee_vars_ai))
+
+rhs_tier <- "treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)"
+models_ref_tier <- c(fit_referee_models(referee_vars_h, rhs_tier),
+                     fit_referee_models(referee_vars_ai, rhs_tier))
 write_ai_table(
-  models = list(m_ref_app_h, m_ref_score_h, m_ref_app_ai, m_ref_score_ai),
-  col_titles = c("Appropriate (human)", "Score (human)", "Appropriate (AI)", "Score (AI)"),
+  models = models_ref_tier,
+  col_titles = titles_referee,
   file = "output/tables/pap_referee.tex",
   coef_mode = "tier",
   controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
 )
 
 # Horizontal: referee outcomes with AI × OOD
-if (TRUE) {
-  f_ref_app_h_o   <- referee_app_human_i   ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-  f_ref_score_h_o <- referee_score_human_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-  f_ref_app_ai_o  <- referee_app_ai_i      ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-  f_ref_score_ai_o<- referee_score_ai_i    ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-  m_ref_app_h_o    <- feols(f_ref_app_h_o,    data = ind, vcov = ~cluster_es)
-  m_ref_score_h_o  <- feols(f_ref_score_h_o,  data = ind, vcov = ~cluster_es)
-  m_ref_app_ai_o   <- feols(f_ref_app_ai_o,   data = ind, vcov = ~cluster_es)
-  m_ref_score_ai_o <- feols(f_ref_score_ai_o, data = ind, vcov = ~cluster_es)
-  write_ai_table(
-    models = list(m_ref_app_h_o, m_ref_score_h_o, m_ref_app_ai_o, m_ref_score_ai_o),
-    col_titles = c("Appropriate (human)", "Score (human)", "Appropriate (AI)", "Score (AI)"),
-    file = "output/tables/pap_referee_horizontal.tex",
-    coef_mode = "ood",
-    controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
-  )
-}
+rhs_ood <- "treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)"
+models_ref_ood <- c(fit_referee_models(referee_vars_h, rhs_ood),
+                    fit_referee_models(referee_vars_ai, rhs_ood))
+write_ai_table(
+  models = models_ref_ood,
+  col_titles = titles_referee,
+  file = "output/tables/pap_referee_horizontal.tex",
+  coef_mode = "ood",
+  controls_desc = "Event & article FE; years of coding; software; prior AI familiarity."
+)
 
 # Referee by years (appendix): replace tier with years × AI
-f_ref_app_h_y   <- referee_app_human_i   ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-f_ref_score_h_y <- referee_score_human_i ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-f_ref_app_ai_y  <- referee_app_ai_i      ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-f_ref_score_ai_y<- referee_score_ai_i    ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)
-m_ref_app_h_y    <- feols(f_ref_app_h_y,    data = ind, vcov = ~cluster_es)
-m_ref_score_h_y  <- feols(f_ref_score_h_y,  data = ind, vcov = ~cluster_es)
-m_ref_app_ai_y   <- feols(f_ref_app_ai_y,   data = ind, vcov = ~cluster_es)
-m_ref_score_ai_y <- feols(f_ref_score_ai_y, data = ind, vcov = ~cluster_es)
+rhs_years <- "treatment*years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)"
+models_ref_years <- c(fit_referee_models(referee_vars_h, rhs_years),
+                      fit_referee_models(referee_vars_ai, rhs_years))
+titles_referee_years <- c(paste0(unname(referee_vars_h), " (yrs)"),
+                          paste0(unname(referee_vars_ai), " (yrs)"))
 write_ai_table(
-  models = list(m_ref_app_h_y, m_ref_score_h_y, m_ref_app_ai_y, m_ref_score_ai_y),
-  col_titles = c("Appropriate (yrs)", "Score (yrs)", "Appropriate (AI, yrs)", "Score (AI, yrs)"),
+  models = models_ref_years,
+  col_titles = titles_referee_years,
   file = "output/tables/pap_referee_years.tex",
   coef_mode = "years",
   controls_desc = "Event & article FE; software; prior AI familiarity."
@@ -382,10 +395,10 @@ mods_s <- list(); mods_m <- list()
 for (tt in tiers) {
   dat <- ai %>% filter(tier == tt)
   if (nrow(dat) >= 5) {
-    mods_s[[tt]] <- feols(reproduction_i ~ log1p(prompts_i) + log1p(files_i) + log1p(images_i) + log1p(words_i)
+    mods_s[[tt]] <- feols(reproduction_i ~ asinh(prompts_i) + asinh(files_i) + asinh(images_i) + asinh(words_i)
                            + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article),
                            data = dat, vcov = ~cluster_es)
-    mods_m[[tt]] <- feols(minutes_to_success_i ~ log1p(prompts_i) + log1p(files_i) + log1p(images_i) + log1p(words_i)
+    mods_m[[tt]] <- feols(minutes_to_success_i ~ asinh(prompts_i) + asinh(files_i) + asinh(images_i) + asinh(words_i)
                            + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article),
                            data = dat, vcov = ~cluster_es)
   }
