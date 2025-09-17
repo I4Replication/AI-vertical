@@ -6,7 +6,7 @@ This project implements an individual‑level analysis pipeline aligned with the
 ## Overview
 - Purpose: Implement PAP-specified analyses for individual participants (no teams).
 - Data model: Individuals are simulated across events, tiers, and software; analyses use these individual records directly.
-- Reproducibility: A single master script orchestrates all steps; configuration lives in `config/config.yml` for easy tuning.
+- Reproducibility: A single master script orchestrates all steps; configuration lives in `config/config.yml` for easy tuning. Usage-intensity variables rely on inverse hyperbolic sine (`asinh`) transforms of self-reported prompt/file/image/word counts, avoiding `log(1+x)` adjustments.
 
 
 ## Repository Layout
@@ -15,14 +15,14 @@ This project implements an individual‑level analysis pipeline aligned with the
   - `cleaning.R`: Simulates individual‑level data and saves `AI individuals.rds`.
   - `prompt distribution.R`: Densities of prompts/files/images/words (AI arm, individual-level).
   - `text figures.R`: Word frequency “cloud” and Markov heatmaps from `data/corpus`.
-  - `pap_analyses.R`: Main and secondary regressions specified in the PAP, plus KM plot.
+  - `pap_analyses.R`: Main and secondary regressions specified in the PAP, plus KM plot (usage regressions use `asinh` transforms).
 - `R/`
   - `simulate_individuals.R`: Synthetic individual generator (and legacy aggregation helpers, unused by default).
   - `reproduction rates.R`: Generates reproduction and error figures used as mock‑ups in the PAP.
 - `config/`
   - `config.yml`: Parameters that govern the simulation and labeling.
 - `data/`
-  - `AI individuals.rds`: Generated individual‑level dataset used by all analyses.
+  - `AI individuals.rds`: Generated individual‑level dataset used by all analyses (usage metrics stored as raw counts; transforms applied downstream).
   - `corpus/`: Optional `.txt` files used to build text‑based figures.
 - `output/`
   - `figures/`: Generated figures (PDF/PNG).
@@ -36,9 +36,11 @@ This project implements an individual‑level analysis pipeline aligned with the
 1. Open a terminal at the project root.
 2. Run: `Rscript "code/R code/master.R"`
 3. Outputs appear under `output/figures` and `output/tables`; a log is written to `output/master_log_R.log`.
+4. When knitting the PAP, set `PAP_REBUILD_TABLES=1` only if you need to regenerate the LaTeX tables; otherwise the Rmd consumes the cached tables in `output/tables/`.
 
 Notes
 - The master script uses `pacman::p_load(...)` to install/load required packages automatically if missing.
+- Self-reported AI-usage counts (prompts/files/images/words) are transformed downstream with `asinh` before any modeling; no usage logs are audited in this simulation.
 - If you prefer, open an interactive R session and pre‑install packages listed under “Dependencies”.
 
 
@@ -98,7 +100,7 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
 
 ## PAP Document
 - Source: `pre_analysis_plan.Rmd` (renders to `pre_analysis_plan.pdf`).
-- Rendering: Knit in RStudio or run `rmarkdown::render('pre_analysis_plan.Rmd')` from R.
+- Rendering: Knit in RStudio or run `rmarkdown::render('pre_analysis_plan.Rmd')` from R. Set `PAP_REBUILD_TABLES=1` beforehand only if you want to regenerate the LaTeX tables; otherwise the Rmd uses the cached `.tex` files under `output/tables/`.
 - Figures: The Rmd includes existing mock‑ups from `output/figures`; it creates sanitized copies in `output/figures_sanitized` for LaTeX.
 - Labels: Event‑indexed figures use generic `Game 1` … `Game 5` ticks (non‑mapped events are omitted).
 
@@ -106,7 +108,7 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
 ## Data Flow
 1. Simulation (`cleaning.R` + `R/simulate_individuals.R`)
    - Simulates individual records across events, tiers, and software.
-   - Outcomes: prompts/files/images/words; success in reproduction; minor/major errors; minutes‑to‑success (censored); robustness and clarity.
+   - Outcomes: prompts/files/images/words (self-reported counts later transformed with `asinh`), success in reproduction, minor/major errors, minutes‑to‑success (censored), robustness and clarity.
 
 2. Figures and tables
    - Prompt Distribution (`prompt distribution.R`): densities for prompts/files/images/words (AI arm, individual-level).
@@ -172,9 +174,9 @@ Main tables (PAP):
 - `output/tables/pap_secondary_learning.tex`: Learning (treatment × event order).
 
 Secondary and appendix:
-- `output/tables/pap_secondary_usage_all.tex`: Within-AI usage regressions including prompts, files, images, words.
-- `output/tables/pap_usage_success_by_tier.tex`: Within-AI usage → success, separate models per tier.
-- `output/tables/pap_usage_minutes_by_tier.tex`: Within-AI usage → minutes, separate models per tier.
+- `output/tables/pap_secondary_usage_all.tex`: Within-AI usage regressions including prompts, files, images, words (asinh transforms).
+- `output/tables/pap_usage_success_by_tier.tex`: Within-AI usage → success, separate models per tier (asinh transforms).
+- `output/tables/pap_usage_minutes_by_tier.tex`: Within-AI usage → minutes, separate models per tier (asinh transforms).
 - `output/tables/pap_robustness_clarity.tex`: Robustness and clarity outcomes (with FE).
 - `output/tables/pap_robustness_clarity_appendix.tex`: Robustness and clarity (no FE) specification check.
 - `output/tables/pap_robustness_clarity_both.tex`: Combined table with FE and no-FE columns side-by-side.
