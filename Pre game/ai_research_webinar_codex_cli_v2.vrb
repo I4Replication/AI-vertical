@@ -1,0 +1,7 @@
+\frametitle{Tiny command cheat sheet}
+\begin{verbatim}
+codex "explain this codebase"
+codex exec "fix the failing test"
+/model gpt-5-codex
+/approvals
+\end{verbatim}

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  17 SEP 2025 15:45
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  3 OCT 2025 12:24
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -990,31 +990,50 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 Missing character: There is no ≤ (U+2264) in font [lmroman10-regular]:mapping=t
 ex-text;!
 [3]
+Underfull \hbox (badness 2653) in paragraph at lines 377--393
+\TU/lmr/m/n/10.95 Participants complete a 60-minute orientation, “Getting Resea
+rch Done with ChatGPT
+ []
+
+[4]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 9.0pt on input line 378.
+(Font)              scaled to size 9.0pt on input line 430.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.0pt on input line 378.
+(Font)              scaled to size 5.0pt on input line 430.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 9.00082pt on input line 378.
+(Font)              scaled to size 9.00082pt on input line 430.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.00046pt on input line 378.
+(Font)              scaled to size 5.00046pt on input line 430.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 8.99904pt on input line 378.
+(Font)              scaled to size 8.99904pt on input line 430.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 4.99947pt on input line 378.
+(Font)              scaled to size 4.99947pt on input line 430.
 Missing character: There is no α (U+03B1) in font [lmroman10-regular]:mapping=t
 ex-text;!
-[4]
-Overfull \hbox (31.63702pt too wide) in paragraph at lines 426--452
+
+Overfull \hbox (31.63702pt too wide) in paragraph at lines 478--504
  [][] 
  []
 
 [5]
-Overfull \hbox (7.88173pt too wide) in alignment at lines 501--540
+Overfull \hbox (72.1385pt too wide) in paragraph at lines 527--544
+[]\TU/lmr/m/n/10.95 We standardize these deliverables with the empty workbook \
+TU/lmtt/m/n/10.95 Reports/Replication_Log_Referee_Template.xlsx\TU/lmr/m/n/10.9
+5 ,
+ []
+
+
+Underfull \hbox (badness 1270) in paragraph at lines 527--544
+\TU/lmr/m/n/10.95 article identifiers, software, event, discipline tags, and th
+e out-of-discipline flag). Sheet
+ []
+
+[6]
+Overfull \hbox (7.88173pt too wide) in alignment at lines 571--610
  [] [] [] [] 
  []
 
-[6] [7]
+[7] [8]
 File: output/figures_sanitized/reproduction_rates_raw_.pdf Graphic file (type p
 df)
 <use output/figures_sanitized/reproduction_rates_raw_.pdf>
@@ -1024,65 +1043,69 @@ File: output/figures_sanitized/major_errors_raw_.pdf Graphic file (type pdf)
 <use output/figures_sanitized/major_errors_raw_.pdf>
 File: output/figures_sanitized/minor_errors_raw_.pdf Graphic file (type pdf)
 <use output/figures_sanitized/minor_errors_raw_.pdf>
-[8] [9]
+[9] [10]
 File: pre_analysis_plan_files/figure-latex/fig-km-1.pdf Graphic file (type pdf)
 
 <use pre_analysis_plan_files/figure-latex/fig-km-1.pdf>
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[10]
+[11]
 Missing character: There is no α (U+03B1) in font [lmroman10-regular]:mapping=t
 ex-text;!
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 762.
+(Font)              scaled to size 7.665pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 762.
+(Font)              scaled to size 5.475pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 762.
+(Font)              scaled to size 10.95099pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 762.
+(Font)              scaled to size 7.66568pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 762.
+(Font)              scaled to size 5.4755pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 762.
+(Font)              scaled to size 10.94882pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 762.
+(Font)              scaled to size 7.66417pt on input line 831.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 762.
-[11] [12]
-Underfull \hbox (badness 1038) in paragraph at lines 854--862
+(Font)              scaled to size 5.47441pt on input line 831.
+[12] [13]
+Underfull \hbox (badness 1038) in paragraph at lines 923--931
 []\TU/lmr/m/n/10.95 Heterogeneity and secondary analyses follow two paths. Firs
 t, we replace tier dummies
  []
 
-[13]
-Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
-ex-text;!
-Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
-ex-text;!
 [14]
 Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
 ex-text;!
 Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
 ex-text;!
-[15] [16] [17]
-Underfull \hbox (badness 3029) in paragraph at lines 1297--1306
+[15]
+Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
+ex-text;!
+Missing character: There is no ≥ (U+2265) in font [lmroman10-regular]:mapping=t
+ex-text;!
+[16] [17] [18]
+Underfull \hbox (badness 3029) in paragraph at lines 1386--1395
 \TU/lmr/m/n/10.95 or “Not appropriate”), \TU/lmtt/m/n/10.95 summary_accuracy\TU
 /lmr/m/n/10.95 , \TU/lmtt/m/n/10.95 literature_placement\TU/lmr/m/n/10.95 , \TU
 /lmtt/m/n/10.95 weakness_diagnosis\TU/lmr/m/n/10.95 ,
  []
 
 LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10.95> not available
-(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 1309.
-[18] [19] (./pre_analysis_plan.aux) ) 
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 1398.
+
+Underfull \vbox (badness 1028) detected at line 1418
+ []
+
+[19] [20] [21] (./pre_analysis_plan.aux) ) 
 Here is how much of TeX's memory you used:
- 22190 strings out of 476683
- 408723 string characters out of 5804047
+ 22194 strings out of 476683
+ 408780 string characters out of 5804047
  1925018 words of memory out of 5000000
- 42050 multiletter control sequences out of 15000+600000
+ 42054 multiletter control sequences out of 15000+600000
  520810 words of font info for 103 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  86i,13n,121p,1014b,478s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on pre_analysis_plan.pdf (19 pages).
+Output written on pre_analysis_plan.pdf (21 pages).

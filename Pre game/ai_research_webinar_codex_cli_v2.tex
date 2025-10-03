@@ -1,0 +1,350 @@
+
+\documentclass[aspectratio=169,professionalfonts]{beamer}
+\usetheme{default}
+
+% Basic packages
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath, amssymb}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{csquotes}
+\usepackage{xspace}
+
+% Beamer metadata
+\title{Getting Research Done with ChatGPT Plus and Modern AI}
+\subtitle{A one hour training for quantitative social sciences}
+\author{Juan Pablo Posada Aparicio}
+\institute{Institute for Replication, University of Ottawa}
+\date{October 2025}
+
+% Utilities
+\newcommand{\feature}[1]{\textbf{#1}}
+\newcommand{\demo}{\textbf{Demo. }}
+\newcommand{\notepara}[1]{\small\textit{#1}}
+
+\begin{document}
+
+%-----------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%-----------------------
+\begin{frame}{Session goals}
+  \begin{itemize}
+    \item Understand what large language models are, at a practical level.
+    \item Learn ChatGPT Plus capabilities that matter for research.
+    \item See how to plug AI into literature, coding, data, writing, and review.
+    \item Get copy paste demo prompts you can run today.
+    \item Leave with a short checklist to use AI responsibly and reproducibly.
+  \end{itemize}
+\end{frame}
+
+%-----------------------
+\begin{frame}{Roadmap, about 60 minutes}
+  \begin{itemize}
+    \item 5 minutes. LLMs in plain language and prompting basics.
+    \item 10 minutes. What is in ChatGPT Plus today.
+    \item 30 minutes. Research workflow playbook, literature to code to writing.
+    \item 10 minutes. Deep Research and Agent Mode.
+    \item 5 minutes. Guardrails, reproducibility, and Q and A.
+    \item 5 minutes. Codex, quick version, at the very end.
+  \end{itemize}
+\end{frame}
+
+%-----------------------
+\section{LLMs in plain language}
+
+\begin{frame}{What is a large language model}
+  \begin{itemize}
+    \item A model that predicts the next token in context. It turns that simple mechanism into useful tasks by following instructions.
+    \item Strengths. Language understanding, code generation, pattern completion, transformation.
+    \item Weaknesses. Can be wrong or overconfident. May miss recent facts without browsing or tools. Needs clear instructions and constraints.
+    \item Your edge. Provide context, constraints, and examples. Iterate and verify.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Prompting that actually works}
+  \begin{itemize}
+    \item Set role and objective. Then give the smallest possible working example.
+    \item Ask for structured outputs you can reuse. For example markdown, csv, json, or a full script.
+    \item Use iterate and verify. Ask for one improvement at a time.
+  \end{itemize}
+\end{frame}
+
+%-----------------------
+\section{What is in ChatGPT Plus}
+
+\begin{frame}{ChatGPT Plus, the useful bits}
+  \begin{itemize}
+    \item \feature{Advanced Data Analysis}. Write and run Python inside the chat. Upload files. Produce figures and tables.
+    \item \feature{Browsing}. Read the web for current facts when you ask for it.
+    \item \feature{Deep Research}. Multi step web research that collects and organizes findings before answering.
+    \item \feature{Custom GPTs}. Create specialized assistants with your instructions and files.
+    \item \feature{Agent Mode}. Let ChatGPT plan and execute multi step tasks with tools, while you supervise.
+  \end{itemize}
+\end{frame}
+
+%-----------------------
+\section{Research workflow playbook}
+
+\begin{frame}{Literature discovery and synthesis}
+  \begin{itemize}
+    \item Ask for a scaffold first. Key theories, main debates, measurement, common datasets.
+    \item Then ask for concrete items. Seminal papers, recent systematic reviews, and data portals.
+    \item Use browsing or Deep Research when you need current sources.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, literature}
+\demo Copy and run one prompt.
+\begin{verbatim}
+You are my research assistant. Topic: the effect of community radios on
+forced displacement in Colombia. Output a literature scaffold with
+sections: theory, identification strategies seen in the field,
+measurement choices, typical datasets, open questions. Limit to 10 bullets.
+\end{verbatim}
+
+\demo With browsing or Deep Research on.
+\begin{verbatim}
+Find 8 recent and credible sources on community radios and violence.
+Return a table with columns: citation in APA, year, identification
+strategy, sample, main finding, link. Put uncertainties in a final note.
+\end{verbatim}
+\end{frame}
+
+\begin{frame}{Data access and documentation}
+  \begin{itemize}
+    \item Ask for a data dictionary plan. Variable names, units, refresh cadence, and owners.
+    \item Have the model draft a README template for each dataset.
+    \item Convert messy documentation into a clean table you can ship.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, data documentation}
+\demo Dictionary and README.
+\begin{verbatim}
+Create a minimal data dictionary schema for a panel of municipalities by
+month. Include: name, label, type, units, allowed values, missing policy,
+owner, refresh cadence, source URL.
+\end{verbatim}
+
+\demo Turn messy text into a table.
+\begin{verbatim}
+Extract a clean csv with columns variable, definition, unit, period
+from the following pasted notes. If needed, ask one clarifying question.
+\end{verbatim}
+\end{frame}
+
+\begin{frame}{Cleaning and analysis with Advanced Data Analysis}
+  \begin{itemize}
+    \item Upload a small sample first. Ask for a quick EDA, missingness, and obvious anomalies.
+    \item Ask for clean, reproducible code with comments and a final function.
+    \item Iterate to reach publication grade figures.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, cleaning and EDA}
+\demo Quick EDA on upload.
+\begin{verbatim}
+Run a 10 minute EDA on the uploaded csv. Show schema, missingness,
+basic summaries, and 3 plots that reveal structure. Save code to a .py
+file I can download.
+\end{verbatim}
+
+\demo Robust cleaning function.
+\begin{verbatim}
+Write a Python function clean_df(df) that trims whitespace, parses dates,
+standardizes municipality names using a provided mapping, and validates
+unique keys (muni_id, month). Return cleaned df and a log of fixes.
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\section{Interpreting results and writing}
+
+\begin{frame}{Interpreting results and writing}
+  \begin{itemize}
+    \item Paste tables or model summaries and ask for a plain English interpretation.
+    \item Ask for a short abstract or a paragraph that highlights identification and magnitude.
+    \item Use a style checklist. Clarity, claims tied to evidence, and limits.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, interpretation and writing}
+\demo Interpret a regression.
+\begin{verbatim}
+Given this regression table, explain the sign, magnitude, and precision
+of key coefficients. Avoid causal language unless identification is explicit.
+\end{verbatim}
+
+\demo Draft a concise abstract.
+\begin{verbatim}
+Draft a 150 word abstract given these bullet points. Emphasize design,
+data, and main effect with uncertainty. Return a single paragraph.
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\section{Peer review and reproducibility}
+
+\begin{frame}{Peer review and reproducibility}
+  \begin{itemize}
+    \item Ask the model to act as a critical but fair reviewer.
+    \item Have it produce a replication log template, aligned with your PAP.
+    \item Use it to standardize robustness checks and pre analysis notes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, review and logs}
+\demo Act as a reviewer.
+\begin{verbatim}
+Act as a critical but fair referee for the following methods section.
+List 5 specific concerns and 3 concrete suggestions to improve validity.
+\end{verbatim}
+
+\demo Replication log template.
+\begin{verbatim}
+Create a csv template for a replication log with columns for coding
+errors, computational reproducibility, two robustness checks, and notes.
+Keep column names short and consistent.
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\section{Advanced features}
+
+\begin{frame}{Deep Research, when to use it}
+  \begin{itemize}
+    \item Use when you want structured web research with sources collected first.
+    \item Ask for constraints. Scope, credibility criteria, and deliverable format.
+    \item Expect longer runs. Use it for scoping reviews or policy scans.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, Deep Research}
+\demo Scoping review pattern.
+\begin{verbatim}
+Use Deep Research to scan policy reports and peer reviewed papers on
+municipal radio and governance outcomes in Latin America after 2010.
+Return a matrix of findings by country and outcome with links.
+\end{verbatim}
+\end{frame}
+
+\begin{frame}{Agent Mode, supervised autonomy}
+  \begin{itemize}
+    \item Plan and execute multi step tasks across tools, under your supervision.
+    \item Good for browse, download data, analyze, and assemble a draft.
+    \item Start with small, auditable tasks. Keep humans in the loop.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demo prompts, Agent Mode}
+\demo End to end micro task.
+\begin{verbatim}
+Plan and run a short workflow. Find two official data sources on radio
+coverage by municipality in Colombia, download small samples, summarize
+coverage over time for Antioquia, and draft a 5 bullet summary with links.
+Ask before any login or large downloads.
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\section{Guardrails}
+
+\begin{frame}{Responsible and reproducible use}
+  \begin{itemize}
+    \item Track provenance. Record what was prompted, what data was used, and when.
+    \item Never paste sensitive data unless policy allows it. Prefer local tools for secrets.
+    \item Verify everything that affects results or claims.
+    \item Save outputs in plain text files. Scripts, logs, and markdown notes.
+    \item Be clear about where AI helped, in acknowledgments or methods.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{A tiny checklist}
+\begin{verbatim}
+1. Did I provide sufficient context and constraints.
+2. Did I verify claims and numbers against sources.
+3. Are scripts and logs saved with dates and versions.
+4. Can a colleague rerun this without me.
+5. Is sensitive data handled according to policy.
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\section{Appendix, prompt bank}
+
+\begin{frame}[fragile]{Prompt bank, quick copy}
+\begin{verbatim}
+Rewrite this paragraph for clarity and precision. Keep technical terms.
+Return two variants and a diff style list of changes.
+\end{verbatim}
+
+\begin{verbatim}
+You are a code reviewer. Read this Stata do file and list 5 risks.
+Then propose 3 refactors that reduce runtime or errors.
+\end{verbatim}
+
+\begin{verbatim}
+Given this figure and caption, propose one alternative visualization
+and write the exact matplotlib or ggplot code.
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\section{Codex, quick version}
+
+\begin{frame}{Codex, what it is and when to use it}
+  \begin{itemize}
+    \item Codex is OpenAI's coding agent for working with your repos.
+    \item Use chat for questions and small snippets. Use Codex when you want edits in files and simple automations.
+    \item Keep your repo under git. Review diffs. You stay in control.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Codex CLI, install and start}
+\begin{verbatim}
+# macOS or Linux
+npm install -g @openai/codex
+# or
+brew install codex
+
+# run
+codex
+\end{verbatim}
+\notepara{On Windows, prefer WSL.}
+\end{frame}
+
+\begin{frame}[fragile]{Two demos you can run}
+\demo Summarize a csv.
+\begin{verbatim}
+Read data.csv here. Report column types, missingness,
+and five key stats per numeric column. Save a markdown summary.
+\end{verbatim}
+
+\demo Explain code you did not write.
+\begin{verbatim}
+Explain what analysis.py does, step by step, and list two risks.
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Tiny command cheat sheet}
+\begin{verbatim}
+codex "explain this codebase"
+codex exec "fix the failing test"
+/model gpt-5-codex
+/approvals
+\end{verbatim}
+\end{frame}
+
+%-----------------------
+\begin{frame}{Q and A}
+  \centering Thank you.
+\end{frame}
+
+\end{document}

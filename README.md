@@ -114,7 +114,7 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
    - Prompt Distribution (`prompt distribution.R`): densities for prompts/files/images/words (AI arm, individual-level).
    - Text Figures (`text figures.R`): top word bar chart; word/bigram transition heatmaps (uses `data/corpus`).
    - PAP Analyses (`pap_analyses.R`):
-     - OLS (success, minutes) and Poisson (minor/major) with event/article FE; SEs clustered by event×software.
+    - OLS (success, minutes) and Poisson (minor/major) with event×article FE; SEs clustered by event×software.
      - Years-of-coding interaction (linear main; quadratic appendix).
      - Within-AI usage models (prompts/files/images/words), including tier-split appendices.
      - Kaplan–Meier survival plot and log‑rank summary.
