@@ -20,10 +20,11 @@ game2_labels <- c(
 )
 
 to_label <- function(x){
-  y <- factor(as.character(x), levels = names(game2_labels), labels = unname(game2_labels))
-  z <- as.character(y)
-  z[is.na(z)] <- "Game 6"
-  factor(z, levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
+  factor(
+    as.character(x),
+    levels = names(game2_labels),
+    labels = unname(game2_labels)
+  )
 }
 
 # Helper to create line plots by branch for a given y variable
@@ -60,9 +61,7 @@ ggsave("output/figures/time2_first_major.pdf",  p_major,  width = 8, height = 4)
 ggsave("output/figures/time2_first_minor.pdf",  p_minor,  width = 8, height = 4)
 ggsave("output/figures/time2_reproduction.pdf", p_reprod, width = 8, height = 4)
 
-# Subset excluding Virtual 2025
-# Subset to the five-game design (drop any non-mapped games)
-# Subset to the five-game design (now including placeholder Game 6)
+# Subset to the five-game design (non-mapped games drop automatically)
 summ_s1 <- summ_by_game_branch
 
 p_major_s1  <- make_plot(summ_s1, "time2_first_major",  "Time to first major error (min)")
