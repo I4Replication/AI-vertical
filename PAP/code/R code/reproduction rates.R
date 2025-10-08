@@ -34,8 +34,7 @@ df_wide <- df_wide %>%
     major_cyorg   = `major_errorsHuman-Only` - `major_errorsAI-Assisted`
   )
 
-# --- 5. Labels for the x-axis (generic five-game design) ---
-# Only the first five events are labeled; others drop (NA) in plots
+# --- 5. Labels for the x-axis (five-game design) ---
 game2_labels <- c(
   "Toronto" = "Game 1",
   "Ottawa" = "Game 2",
@@ -48,10 +47,8 @@ df_wide$game2 <- factor(
   levels = names(game2_labels),
   labels = unname(game2_labels)
 )
-df_wide$game2 <- as.character(df_wide$game2)
-df_wide$game2[is.na(df_wide$game2)] <- "Game 6"
 df_wide$game2 <- factor(df_wide$game2,
-                        levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
+                        levels = c("Game 1","Game 2","Game 3","Game 4","Game 5"))
 
 # --- 6. Reproduction plot ---
 p1 <- ggplot(df_wide, aes(x = game2)) +
@@ -202,10 +199,8 @@ df_summary$game2 <- factor(
   levels = names(game2_labels),
   labels = unname(game2_labels)
 )
-df_summary$game2 <- as.character(df_summary$game2)
-df_summary$game2[is.na(df_summary$game2)] <- "Game 6"
 df_summary$game2 <- factor(df_summary$game2,
-                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
+                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5"))
 
 # --- B. Ensure tidy branch labels and colours (PAP: two-arm only) --
 # Filter out AI-Led for PAP figures and standardize palette to two colors

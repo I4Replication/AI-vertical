@@ -61,18 +61,14 @@ game2_labels <- c(
 df_wide$game2    <- factor(df_wide$game2,
                            levels = names(game2_labels),
                            labels = unname(game2_labels))
-df_wide$game2    <- as.character(df_wide$game2)
-df_wide$game2[is.na(df_wide$game2)] <- "Game 6"
 df_wide$game2    <- factor(df_wide$game2,
-                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
+                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5"))
 
 df_summary$game2 <- factor(df_summary$game2,
                            levels = names(game2_labels),
                            labels = unname(game2_labels))
-df_summary$game2 <- as.character(df_summary$game2)
-df_summary$game2[is.na(df_summary$game2)] <- "Game 6"
 df_summary$game2 <- factor(df_summary$game2,
-                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5","Game 6"))
+                           levels = c("Game 1","Game 2","Game 3","Game 4","Game 5"))
 
 # ---- 5. Colores y helpers -------------------------------------------------------
 cols <- c("Human-Only vs AI-Assisted" = "#D55E00")
