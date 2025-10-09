@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  9 OCT 2025 11:34
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  9 OCT 2025 14:36
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -913,10 +913,6 @@ Package hyperref Info: Link coloring OFF on input line 29.
 \@outlinefile=\write5
 \openout5 = `ai_research_webinar_codex_cli_v2.out'.
 
-
-
-Package hyperref Warning: Rerun to get /PageLabels entry.
-
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
 (Font)                  OT1/lmr/m/n --> OT1/cmss/m/n on input line 29.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
@@ -1090,10 +1086,10 @@ t changed.
 (rerunfilecheck)             Checksum: D954388B36533D9770182554D37AFE7A;565.
  ) 
 Here is how much of TeX's memory you used:
- 23469 strings out of 476683
- 454475 string characters out of 5804047
+ 23467 strings out of 476683
+ 454429 string characters out of 5804047
  1851018 words of memory out of 5000000
- 43223 multiletter control sequences out of 15000+600000
+ 43221 multiletter control sequences out of 15000+600000
  524323 words of font info for 59 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  128i,14n,122p,463b,557s stack positions out of 10000i,1000n,20000p,200000b,200000s

@@ -266,7 +266,7 @@ We test whether providing large-language-model (LLM) assistance compresses perfo
 
 # Registration and Funding
 
-This pre-analysis plan will be preregistered on OSF at: OSF prereg link (placeholder). Funded by Open Philanthropy and the Institute for Replication (I4R). Upon registration we will mirror the locked PAP together with the analysis scripts used to generate the mock tables and figures; live study code and data will be added only after the analysis lock.
+This pre-analysis plan is registered on the Open Science Framework (OSF) at https://osf.io/dkfzt/. Funded by Open Philanthropy and the Institute for Replication (I4R). The locked PAP together with the analysis scripts used to generate the mock tables and figures are mirrored there; live study code and data will be added only after the analysis lock.
 
 # Background and Rationale
 
