@@ -107,7 +107,12 @@ clean_participants <- function(roster_df) {
 
   roster_df |>
     mutate(
-      participation_flag = str_to_lower(str_squish(.data[[col_participate]])) == "yes",
+      participation_choice = case_when(
+        str_to_lower(str_squish(.data[[col_participate]])) == "yes" ~ "Yes",
+        str_to_lower(str_squish(.data[[col_participate]])) == "no" ~ "No",
+        TRUE ~ NA_character_
+      ),
+      participation_flag = !is.na(participation_choice),
       email_clean = str_to_lower(str_squish(.data[[col_email]])),
       email_clean = if_else(is.na(email_clean) | email_clean == "", NA_character_, email_clean),
       date_modified = suppressWarnings(as.POSIXct(.data[[col_modified]], origin = "1970-01-01")),
@@ -254,6 +259,7 @@ for (event_path in event_files) {
       response_id,
       participant_name,
       participant_email = email_clean,
+      participation_choice,
       tier,
       tier_2,
       primary_discipline,
