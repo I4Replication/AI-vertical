@@ -29,28 +29,23 @@
 \headcommand {\beamer@framepages {10}{10}}
 \headcommand {\slideentry {3}{0}{3}{11/11}{}{0}}
 \headcommand {\beamer@framepages {11}{11}}
-\headcommand {\beamer@sectionpages {9}{11}}
-\headcommand {\beamer@subsectionpages {9}{11}}
-\headcommand {\sectionentry {4}{AI toolkit}{12}{AI toolkit}{0}}
-\headcommand {\slideentry {4}{0}{1}{12/12}{}{0}}
+\headcommand {\slideentry {3}{0}{4}{12/12}{}{0}}
 \headcommand {\beamer@framepages {12}{12}}
-\headcommand {\slideentry {4}{0}{2}{13/13}{}{0}}
+\headcommand {\slideentry {3}{0}{5}{13/13}{}{0}}
 \headcommand {\beamer@framepages {13}{13}}
-\headcommand {\slideentry {4}{0}{3}{14/14}{}{0}}
+\headcommand {\slideentry {3}{0}{6}{14/14}{}{0}}
 \headcommand {\beamer@framepages {14}{14}}
-\headcommand {\slideentry {4}{0}{4}{15/15}{}{0}}
+\headcommand {\slideentry {3}{0}{7}{15/15}{}{0}}
 \headcommand {\beamer@framepages {15}{15}}
-\headcommand {\slideentry {4}{0}{5}{16/16}{}{0}}
+\headcommand {\beamer@sectionpages {9}{15}}
+\headcommand {\beamer@subsectionpages {9}{15}}
+\headcommand {\sectionentry {4}{AI toolkit}{16}{AI toolkit}{0}}
+\headcommand {\slideentry {4}{0}{1}{16/16}{}{0}}
 \headcommand {\beamer@framepages {16}{16}}
-\headcommand {\beamer@sectionpages {12}{16}}
-\headcommand {\beamer@subsectionpages {12}{16}}
-\headcommand {\sectionentry {5}{Codex overview}{17}{Codex overview}{0}}
-\headcommand {\slideentry {5}{0}{1}{17/17}{}{0}}
+\headcommand {\slideentry {4}{0}{2}{17/17}{}{0}}
 \headcommand {\beamer@framepages {17}{17}}
-\headcommand {\slideentry {5}{0}{2}{18/18}{}{0}}
-\headcommand {\beamer@framepages {18}{18}}
-\headcommand {\beamer@partpages {1}{18}}
-\headcommand {\beamer@subsectionpages {17}{18}}
-\headcommand {\beamer@sectionpages {17}{18}}
-\headcommand {\beamer@documentpages {18}}
-\headcommand {\gdef \inserttotalframenumber {18}}
+\headcommand {\beamer@partpages {1}{17}}
+\headcommand {\beamer@subsectionpages {16}{17}}
+\headcommand {\beamer@sectionpages {16}{17}}
+\headcommand {\beamer@documentpages {17}}
+\headcommand {\gdef \inserttotalframenumber {17}}

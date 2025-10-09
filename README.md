@@ -19,7 +19,11 @@ This project implements an individual‑level analysis pipeline aligned with the
   - Supporting LaTeX artifacts (`.aux`, `.toc`, etc.) plus references in `references.bib`.
 - `Papers/`
   - Journal folders (e.g., `AEJapplied/`, `AJPS/`, `Psych Science/`) with article PDFs and replication packages.
-  - `papers.xlsx`: Inventory linking tasks to disciplines and replication assets.
+  - `papers.xlsx`: Inventory linking tasks to disciplines and replication assets. The current lock lists 15 studies (AJPS = 5, AEJ: Applied Economics = 5, Psychological Science = 5).
+  - Current inventory snapshot:
+    - AEJ: Applied Economics — What Impacts Can We Expect from School Spending Policy?; The Evolution of Local Labor Markets After Recessions; Expected Returns to Crime and Crime Location; The Willingness to Pay for a Cooler Day; Better Alone? Evidence on the Costs of Intermunicipal Cooperation.
+    - AJPS — Public Participation and Constitutional Compliance; Austerity, Economic Vulnerability, and Populism; A Spatial Rogowski Theory of America's 19th-Century Protectionism; Biased bureaucrats and the policies of international organizations; Expertise Acquisition in Congress.
+    - Psychological Science — Universal Constraints on Linguistic Event Categories; The Development of Spatial Cognition and Its Malleability Assessed in Mass Population via a Mobile Game; Contactless Real-Time Heart Rate Predicts the Performance of Elite Athletes; Impaired and Spared Auditory Category Learning in Developmental Dyslexia; The Impact of Implicit-Bias-Oriented Diversity Training on Police Officers' Beliefs, Motivations, and Actions.
 - `Pre game/`
   - Slides and LaTeX sources for the “Getting Research Done with ChatGPT Plus and Modern AI” orientation.
   - Generated artifacts (`.pdf`, `.tex`, `.log`, etc.) for the training deck.
