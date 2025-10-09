@@ -15,7 +15,7 @@
 \usepackage{xspace}
 
 % Beamer metadata
-\title{Getting Research Done with ChatGPT Plus and Modern AI}
+\title{AI Replication Games October 16th}
 \subtitle{A one hour training for quantitative social sciences}
 \author{Juan Pablo Posada Aparicio}
 \institute{Institute for Replication, University of Ottawa}
@@ -38,8 +38,6 @@
   \begin{itemize}
     \item Align on the Replication Games storyline, schedule, and roles before event day.
     \item Clarify randomization, treatment arms, and deliverables drawn from the preregistered design.
-    \item Preview the AI training components that support literature, data, coding, writing, and review work.
-    \item Reinforce responsible and reproducible practices across human-only and AI-assisted teams.
   \end{itemize}
 \end{frame}
 
@@ -60,7 +58,7 @@
 
 \begin{frame}{Pre-games storyline}
   \begin{itemize}
-    \item Kick off the Replication Games cohort and align on the narrative before event day.
+    \item Kick off the Replication Games and align on the narrative before event day.
     \item Friendly human versus AI-augmented challenge tests speed, accuracy, and issue-spotting.
     \item We study vertical gaps across expertise tiers and horizontal gaps across disciplines.
   \end{itemize}
@@ -70,7 +68,7 @@
   \begin{itemize}
     \item Institute for Replication with Abel Brodeur coordinates the University of Ottawa hub.
     \item Support crew: Ghina Abdul Baki, Juan Pablo Aparicio, Bruno Barbarioli, Lenka Fiala, Derek Mikola, David Valenta.
-    \item University of Ottawa hosts in person; virtual teams rely on Zoom and Slack. Email: instituteforreplication@gmail.com.
+    \item University of Ottawa hosts in person; virtual participants rely on Zoom. Email: instituteforreplication@gmail.com.
   \end{itemize}
 \end{frame}
 
@@ -79,6 +77,7 @@
 
 \begin{frame}{Study design essentials}
   \begin{itemize}
+    \item You will be randomly assigned to work either as a human-only participant or as part of the cyborg (AI-assisted) arm.
     \item Around 300 participants stratified by expertise tier and discipline tag.
     \item Randomized 1:1 within strata to AI-assisted access versus human-only control.
     \item Task pool spans Economics, Political Science, and Psychology with assignments balancing in- and out-of-discipline exposure.
@@ -88,7 +87,7 @@
 \begin{frame}{Treatment arms and tiers}
   \begin{itemize}
     \item \textbf{Human control}. No external AI during the work window; document everything manually.
-    \item \textbf{Cyborg arm}. ChatGPT Plus with Advanced Data Analysis, Deep Research, Agent Mode, and Codex CLI support.
+    \item \textbf{Cyborg arm}. ChatGPT Plus with Advanced Data Analysis, Deep Research, Agent Mode, and Codex CLI support; other AI tools are allowed if they document usage.
     \item Tiers from Undergraduate to Professor; we log discipline tags, coding experience, and AI familiarity for heterogeneity analyses.
   \end{itemize}
 \end{frame}
@@ -96,8 +95,8 @@
 \begin{frame}{Participant prep checklist}
   \begin{itemize}
     \item Complete this orientation and skim the reporting workbook (\href{https://github.com/I4Replication/AI-vertical/blob/main/Reports/Replication_Log_Referee_Template.xlsx}{GitHub template}).
-    \item Accept the ChatGPT Team invite promptly; access stays scoped to event participants.
-    \item Confirm hardware, software licenses (R/Stata/Python), VPN access, and data permissions before event day.
+    \item Accept the ChatGPT Team invite promptly.
+    \item Confirm hardware and required software licenses (R/Stata/Python) before event day.
     \item Review the assignment email so you know your tier, discipline tag, arm, and team roster.
   \end{itemize}
 \end{frame}
@@ -107,19 +106,51 @@
 
 \begin{frame}{Event-day timeline and workflow}
   \begin{itemize}
-    \item 8:45 local check-in or remote login; 9:00 Dropbox folder and reporting sheet unlock.
-    \item Read instructions, identify the focal result, and catalog received files.
+    \item 8:45 local check-in or remote login; 9:00 shared Dropbox folder unlocks (OSF mirror provided for anyone without Dropbox) alongside the reporting sheet.
+    \item Read instructions, note the focal result highlighted on the first page of the paper, and confirm you have every required file.
     \item Reproduce the assigned result, logging timestamps; audit code for major and minor errors.
-    \item Run robustness checks and keep the reporting sheet updated throughout the seven-hour window.
+    \item Run robustness checks and keep the reporting sheet—referee-report tab included—updated throughout the seven-hour window.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Deliverables, compliance, and support}
   \begin{itemize}
     \item Submit the reproduced result, error log, and reporting workbook by 16:00, plus qualitative notes if helpful.
-    \item Control arm pledges no AI; AI arm logs prompts, files, and outputs for internal usage analyses.
+    \item Control arm pledges no AI; AI arm completes a short end-of-day survey noting which AI tools they used and how often (no prompt logging required).
     \item Primary outcomes cover success, timing, error counts, and robustness; secondary outcomes review narratives and recommendations.
-    \item Technical issues: contact Derek Mikola, Ghina Abdul Baki, Bruno Barbarioli, or Juan Pablo Aparicio. Design decisions: Abel Brodeur or Juan Pablo Aparicio.
+    \item Technical or design questions: email instituteforreplication@gmail.com.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What we mean by computational reproducibility}
+  \begin{itemize}
+    \item Anyone with the shared code, data, and instructions should be able to rerun the workflow and obtain the same focal result.
+    \item Re-runs should execute end-to-end without manual tweaks, with scripts producing identical figures, tables, and statistics.
+    \item Document external dependencies (software versions, seeds, APIs) so others can recreate the original computing environment.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Classifying coding issues}
+  \begin{itemize}
+    \item \textbf{Major errors}: Significantly change the numerical result, invalidate inference, or change conclusions.
+    \item \textbf{Minor errors}: Issues that do not alter the reported outcome, inference or conclusions.
+    \item Missing file paths, hard-coded directories, or absent packages are expected, do not treat them as coding errors.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Required robustness checks}
+  \begin{itemize}
+    \item Each team proposes and runs two targeted robustness checks tied to the assigned result.
+    \item Prioritize checks that stress key assumptions (e.g., alternative specifications, sample trims, inference methods).
+    \item Record the design, implementation status, and outcomes for each check in the reporting sheet.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Referee report deliverable}
+  \begin{itemize}
+    \item Use the referee-report tab inside the reporting sheet to summarize findings, robustness evidence, and recommendations.
+    \item Focus on clarity: describe reproducibility outcomes, major/minor issues, and follow-up suggestions for the original authors.
+    \item Keep evidence-linked: cite code cells, logs, or file names so the organizing team can audit quickly.
   \end{itemize}
 \end{frame}
 
@@ -134,55 +165,11 @@
 %-----------------------
 \section{AI toolkit}
 
-\begin{frame}{LLM basics}
-  \begin{itemize}
-    \item Large language models predict the next token in context to follow instructions for language and code tasks.
-    \item Strengths: structured generation, pattern completion, code drafting, translation. Weaknesses: hallucinations, stale knowledge, need for clear constraints.
-    \item Your edge: provide roles, context, examples, and verification loops to steer outputs.
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{ChatGPT Plus toolkit}
   \begin{itemize}
     \item \feature{Advanced Data Analysis}. Run Python, upload files, and produce figures or tables in chat.
     \item \feature{Browsing \& Deep Research}. Reach current sources with citations and credibility checks.
     \item \feature{Custom GPTs \& Agent Mode}. Tailor assistants and supervise multistep execution inside your workflow.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Research workflow highlights}
-  \begin{itemize}
-    \item Literature scaffolds surface theories, debates, data sources, and structured reference tables.
-    \item Data documentation drafts dictionaries, README structures, and polished tables from messy notes.
-    \item Analysis support covers exploratory summaries, cleaning scripts, reusable helpers, and visualization guidance.
-    \item Writing and review assistance interprets results, drafts abstracts, flags causal language risks, and generates referee-style feedback.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Advanced features in practice}
-  \begin{itemize}
-    \item Deep Research orchestrates medium-depth web reviews with explicit credibility and coverage criteria.
-    \item Agent Mode sequences browsing, analysis, and drafting steps while keeping humans in the approval loop.
-    \item Works best on scoped, auditable tasks where intermediate outputs remain inspectable.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Guardrails and checkpoints}
-  \begin{itemize}
-    \item Track prompts, data inputs, timestamps, and versions so provenance stays transparent.
-    \item Verify claims against trusted sources and store scripts or logs with version history.
-    \item Keep workflows reproducible and aligned with data governance, disclosure, and consent policies.
-  \end{itemize}
-\end{frame}
-
-%-----------------------
-\section{Codex overview}
-
-\begin{frame}{Codex overview}
-  \begin{itemize}
-    \item Codex is OpenAI's coding agent that works inside git-managed projects alongside your local tools.
-    \item Natural-language instructions drive code exploration, edits, and command execution with human approvals.
-    \item Terminal-first workflow surfaces plans, diffs, and checkpoints so changes stay aligned with existing practices.
   \end{itemize}
 \end{frame}
 
