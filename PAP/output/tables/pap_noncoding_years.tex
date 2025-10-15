@@ -1,0 +1,33 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{8}{c}}
+\hline\hline
+ & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8)
+\\
+ & Appropriate (human) (yrs) & Overall 0–5 (human) (yrs) & Appropriate (AI) (yrs) & Overall 0–5 (AI) (yrs) & Implemented ≥1 (yrs) & Implemented ≥2 (yrs) & Planned ≥1 (yrs) & Planned ≥2 (yrs)
+ \\
+\hline
+AI-Assisted & -0.021 &  0.685*** & -0.078 &  0.717*** &  0.017 &  0.161** & -0.089 &  0.080
+\\
+ & ( 0.119) & ( 0.196) & ( 0.125) & ( 0.212) & ( 0.112) & ( 0.065) & ( 0.123) & ( 0.082)
+\\
+ & [-0.255;  0.213] & [ 0.299;  1.070] & [-0.325;  0.169] & [ 0.300;  1.135] & [-0.203;  0.238] & [ 0.032;  0.290] & [-0.332;  0.153] & [-0.081;  0.242]
+\\
+AI × Years of coding &  0.008 & -0.084** &  0.005 & -0.088** &  0.025 & -0.018 &  0.040* &  0.003
+\\
+ & ( 0.022) & ( 0.034) & ( 0.023) & ( 0.038) & ( 0.021) & ( 0.013) & ( 0.022) & ( 0.016)
+\\
+ & [-0.035;  0.052] & [-0.152; -0.016] & [-0.040;  0.051] & [-0.163; -0.013] & [-0.017;  0.067] & [-0.043;  0.007] & [-0.004;  0.084] & [-0.030;  0.035]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.443 &  3.178 &  0.462 &  3.190 &  0.254 &  0.110 &  0.360 &  0.170
+\\
+Obs. & 264 & 264 & 264 & 264 & 264 & 264 & 264 & 264
+\\
+\hline
+\hline\hline
+\multicolumn{9}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{9}{l}{Controls: Event×article FE; software; prior AI familiarity.}\\
+\multicolumn{9}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

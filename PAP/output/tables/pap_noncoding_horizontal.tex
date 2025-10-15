@@ -1,0 +1,33 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{8}{c}}
+\hline\hline
+ & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8)
+\\
+ & Appropriate (human) & Overall 0–5 (human) & Appropriate (AI) & Overall 0–5 (AI) & At least 1 check & At least 2 checks & Implemented ≥1 & Implemented ≥2
+ \\
+\hline
+AI-Assisted &  0.019 &  0.202 & -0.093 &  0.258 &  0.133 &  0.204** &  0.227** &  0.119*
+\\
+ & ( 0.106) & ( 0.164) & ( 0.101) & ( 0.174) & ( 0.105) & ( 0.079) & ( 0.092) & ( 0.069)
+\\
+ & [-0.189;  0.228] & [-0.121;  0.525] & [-0.293;  0.106] & [-0.084;  0.600] & [-0.074;  0.341] & [ 0.048;  0.360] & [ 0.045;  0.409] & [-0.016;  0.255]
+\\
+AI × Outside-discipline & -0.007 &  0.127 &  0.065 &  0.058 & -0.047 & -0.173* & -0.139 & -0.070
+\\
+ & ( 0.130) & ( 0.203) & ( 0.129) & ( 0.212) & ( 0.129) & ( 0.100) & ( 0.117) & ( 0.085)
+\\
+ & [-0.263;  0.249] & [-0.272;  0.526] & [-0.190;  0.320] & [-0.359;  0.475] & [-0.301;  0.208] & [-0.370;  0.023] & [-0.369;  0.091] & [-0.237;  0.097]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.443 &  3.178 &  0.462 &  3.190 &  0.360 &  0.170 &  0.254 &  0.110
+\\
+Obs. & 264 & 264 & 264 & 264 & 264 & 264 & 264 & 264
+\\
+\hline
+\hline\hline
+\multicolumn{9}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{9}{l}{Controls: Event×article FE; years of coding; software; prior AI familiarity.}\\
+\multicolumn{9}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}

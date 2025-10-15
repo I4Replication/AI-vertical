@@ -1,7 +1,7 @@
 # Synthetic individual-level generator for AI vertical
 suppressPackageStartupMessages({
   library(dplyr); library(tidyr); library(stringr); library(lubridate)
-  library(purrr); library(readr); library(yaml)
+  library(purrr); library(yaml)
 })
 
 sim_read_config <- function(){
@@ -68,15 +68,6 @@ sim_individuals <- function(cfg){
       min_coding = factor(sample(coding_levels, n(), replace = TRUE), levels = coding_levels)
     )
 
-  # prompts/files/images/words at individual level (Poisson-ish)
-  lam <- pmax(0.1, rnorm(nrow(indiv), cfg$prompts_intensity_mean, cfg$prompts_intensity_sd))
-  indiv <- indiv |> mutate(
-    prompts_i = rpois(n(), lam),
-    files_i   = rpois(n(), lam/4),
-    images_i  = rpois(n(), lam/6),
-    words_i   = rpois(n(), lam*20)
-  )
-
   # PAP: outcome generation with treatment x tier compression
   # Baseline UG control mean and tier deltas
   base_rep_ug <- cfg$pap_base_rep_ug %||% 0.40
@@ -97,7 +88,7 @@ sim_individuals <- function(cfg){
   p1 <- pmin(0.98, pmax(0.02, p0 + d_tier))
   p_rep <- ifelse(indiv$treatment==1, p1, p0)
   # Prior familiarity and prompts nudge
-  p_rep <- p_rep + 0.01*(indiv$prior_gpt_familiarity=="Heavy") + 0.0005*indiv$prompts_i
+  p_rep <- p_rep + 0.01*(indiv$prior_gpt_familiarity=="Heavy")
   p_rep <- pmin(0.98, pmax(0.02, p_rep + rnorm(nrow(indiv), 0, 0.05)))
 
   indiv <- indiv |> mutate(
@@ -134,6 +125,10 @@ sim_individuals <- function(cfg){
     ran_any_check_i = rbinom(n(), 1, plogis(-0.5 + 0.3*(treatment==1) + 0.03*years_coding)),
     clarity_score_i = pmin(5, pmax(0, rnorm(n(), 3 + 0.2*(treatment==1) + 0.05*log1p(years_coding), 0.8)))
   )
+  indiv <- indiv |> mutate(
+    implemented_check_1_i = pmin(1, good_checks_i * rbinom(n(), 1, 0.75)),
+    implemented_check_2_i = pmin(1, two_good_checks_i * rbinom(n(), 1, 0.65))
+  )
 
   # approximate times since 9:00 base
   base_time <- as.POSIXct("1899-12-31 09:00:00", tz = "UTC")
@@ -158,10 +153,6 @@ aggregate_to_team <- function(indiv){
       time2_first_minor = suppressWarnings(min(time2_first_minor_i, na.rm = TRUE)),
       major_errors = sum(major_errors_i, na.rm = TRUE),
       time2_first_major = suppressWarnings(min(time2_first_major_i, na.rm = TRUE)),
-      prompts = sum(prompts_i, na.rm = TRUE),
-      files   = sum(files_i,   na.rm = TRUE),
-      images  = sum(images_i,  na.rm = TRUE),
-      words   = sum(words_i,   na.rm = TRUE),
       .groups = "drop"
     ) |> mutate(
       time2_reproduction = ifelse(is.infinite(time2_reproduction), NA, time2_reproduction),

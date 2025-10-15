@@ -1,0 +1,33 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{3}{c}}
+\hline\hline
+ & (1) & (2) & (3)
+\\
+ & Reproduction & Minor errors & Major errors
+ \\
+\hline
+AI-Assisted &  0.339*** &  0.156 &  0.230
+\\
+ & ( 0.096) & ( 0.309) & ( 0.505)
+\\
+ & [ 0.151;  0.528] & [-0.450;  0.761] & [-0.761;  1.221]
+\\
+AI × Outside-discipline & -0.339*** & -0.154 & -0.382
+\\
+ & ( 0.121) & ( 0.425) & ( 0.652)
+\\
+ & [-0.577; -0.100] & [-0.987;  0.680] & [-1.659;  0.895]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.485 &  0.356 &  0.159
+\\
+Obs. & 264 & 264 & 264
+\\
+\hline
+\hline\hline
+\multicolumn{4}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{4}{l}{Controls: Event×article FE; years of coding; software; prior AI familiarity.}\\
+\multicolumn{4}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}
