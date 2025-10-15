@@ -1,5 +1,5 @@
 ---
-title: "Reproducing with AI Across the Expertise Ladder"
+title: "Bridging Research Gaps With AI: Expertise and Disciplinary Mobility"
 author: "\\begin{minipage}{0.9\\textwidth}\\centering \\small Ghina Abdul Baki, Juan P. Aparicio, Bruno Barbarioli, Abel Brodeur,\\\\ Lenka Fiala, Derek Mikola, David Valenta \\end{minipage}"
 date: "`r format(Sys.Date())`"
 output:
@@ -151,27 +151,21 @@ wald_compression_p <- function(m) {
   R <- paste(base, '=', rest)
   tryCatch({ fixest::wald(m, R)$p.value }, error = function(e) NA_real_)
 }
-write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','usage','learn','prompts'),
+write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','learn','ood'),
                            controls_desc = 'Event×article FE; years of coding; software; prior AI familiarity.',
                            dep_means = NULL) {
   coef_mode <- match.arg(coef_mode)
   K <- length(models); stopifnot(length(col_titles) == K)
   dir.create(dirname(file), showWarnings = FALSE, recursive = TRUE)
   if (coef_mode == 'tier') {
-    keep <- c('treatment','treatment:tierMA','treatment:tierPhD','treatment:tierPD','treatment:tierP')
-    labels <- c('AI-Assisted','AI × Master\'s','AI × PhD','AI × Postdoc','AI × Professor')
+    keep <- c('treatment','treatment:tier_3GR','treatment:tier_3PR')
+    labels <- c('AI-Assisted','AI × Graduate','AI × Professor/Researcher')
   } else if (coef_mode == 'years') {
     keep <- c('treatment','years_coding:treatment')
     labels <- c('AI-Assisted','AI × Years of coding')
-  } else if (coef_mode == 'usage') {
-    keep <- c('asinh(prompts_i)','asinh(files_i)','asinh(images_i)','asinh(words_i)')
-    labels <- c('asinh(prompts)','asinh(files)','asinh(images)','asinh(words)')
   } else if (coef_mode == 'learn') {
     keep <- c('treatment','treatment:event_order')
     labels <- c('AI-Assisted','AI × Event order')
-  } else if (coef_mode == 'prompts') {
-    keep <- c('asinh(prompts_i)')
-    labels <- c('asinh(prompts)')
   }
   lines <- c()
   lines <- c(lines, '\\def\\sym#1{\\ifmmode^{#1}\\else\\(^{#1}\\)\\fi}')
@@ -218,11 +212,10 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
         if (name2 %in% names(b)) return(which(names(b)==name2))
         return(NA_integer_)
       }
-      idx_P   <- find_idx('treatment:tierP')
-      idx_PD  <- find_idx('treatment:tierPD')
-      idx_PhD <- find_idx('treatment:tierPhD')
-      idx_MA  <- find_idx('treatment:tierMA')
-      if (any(is.na(c(idx_P, idx_PD, idx_PhD, idx_MA)))) return(NA_real_)
+      idx_main <- find_idx('treatment')
+      idx_GR   <- find_idx('treatment:tier_3GR')
+      idx_PR   <- find_idx('treatment:tier_3PR')
+      if (any(is.na(c(idx_main, idx_GR, idx_PR)))) return(NA_real_)
       mk_p <- function(i, j){
         cvec <- rep(0, length(b)); cvec[i] <- -1; cvec[j] <- 1
         est <- sum(cvec * b)
@@ -231,9 +224,10 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
         z <- est / se
         1 - pnorm(z)
       }
-      p1 <- mk_p(idx_P, idx_PD); p2 <- mk_p(idx_PD, idx_PhD); p3 <- mk_p(idx_PhD, idx_MA)
-      if (any(is.na(c(p1,p2,p3)))) return(NA_real_)
-      max(p1,p2,p3)
+      p1 <- mk_p(idx_main, idx_GR)
+      p2 <- mk_p(idx_GR, idx_PR)
+      if (any(is.na(c(p1,p2)))) return(NA_real_)
+      max(p1,p2)
     }
     pvals <- sapply(models, function(m) fmt3(tryCatch(p_monotonic_tier(m), error=function(e) NA_real_)))
     lines <- c(lines, paste(c('p-val (Monotonic compression)', pvals), collapse=' & '), '\\\\')
@@ -245,7 +239,7 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
              paste0('\\multicolumn{', K+1, '}{l}{\\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\\\'),
              paste0('\\multicolumn{', K+1, '}{l}{Controls: ', ctrl_txt, '}\\\\'))
   if (coef_mode == 'tier') {
-    lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{Compression (monotonic): one-sided p-value for increasing effects across tiers (baseline: Undergraduate).}\\\\'))
+    lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{Compression (monotonic): one-sided p-value for increasing effects across the three tiers (baseline: Undergraduate).}\\\\'))
   }
   lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{\\sym{*} $p<0.10$, \\sym{**} $p<0.05$,  \\sym{***} $p<0.01$}\\\\'))
   lines <- c(lines, '\\end{tabular}')
@@ -262,7 +256,7 @@ if (identical(Sys.getenv("PAP_REBUILD_TABLES"), "1")) {
 
 # Abstract
 
-We test whether providing large-language-model (LLM) assistance compresses performance gaps in computational reproduction tasks along two pre-specified dimensions. Vertically, we study expertise tiers using two complementary stratifications: (i) the five-tier ladder (undergraduate, master’s, PhD, postdoc/researcher, professor) and (ii) a three-category grouping (undergraduate, graduate student, professor/researcher) deployed when event-level counts require a coarser partition. Horizontally, we study cross-discipline performance in three quantitative social sciences (Economics, Political Science, Psychology) to assess whether AI reduces the penalty from working outside one’s primary discipline (out-of-discipline, OOD). Participants are randomized 1:1 to AI access (ChatGPT Plus with tools) versus human-only controls within the applicable expertise strata; tasks carry a single discipline tag, with undergraduates always receiving inside-discipline assignments and approximately 30% of the remaining participants randomly assigned to an outside-discipline paper. Primary outcomes are: (i) successful reproduction, (ii) minutes to first success, and (iii) detection of coding errors (major, minor); referee-report outcomes evaluate summary accuracy, literature positioning, weakness diagnosis, recommendation quality, communication clarity, and an overall assessment. The study is designed to reveal whether AI acts as an equalizer within expertise tiers and whether it enables researchers to operate effectively across disciplines.
+We test whether providing large-language-model (LLM) assistance compresses performance gaps in research skills along two pre-specified dimensions. Vertically, we study expertise tiers using a three-category grouping (undergraduate, graduate student, professor/researcher) that governs both randomization and analysis while retaining self-reported titles for descriptive context. Horizontally, we study cross-discipline performance in three quantitative social sciences (Economics, Political Science, Psychology) to assess whether AI reduces the penalty from working outside one’s primary discipline (out-of-discipline, OOD). Participants are randomized 1:1 to AI access (e.g. ChatGPT) versus human-only controls within the applicable expertise strata; tasks are assigned a single discipline tag, with undergraduates always receiving inside-discipline assignments and approximately the remaining participants randomly assigned to an outside-discipline paper. Outcome measures are organized into two families: coding skills (computational reproducibility and the detection of major/minor coding errors) and non-coding skills (referee appropriateness/overall scores and robustness-check execution). The study is designed to reveal whether AI acts as an equalizer within expertise tiers and whether it enables researchers to operate effectively across disciplines.
 
 # Registration and Funding
 
@@ -272,39 +266,39 @@ This pre-analysis plan is registered on the Open Science Framework (OSF) at http
 
 Prior multi‑site “AI Replication Games” documented measurable AI effects on success and speed in reproduction tasks, while also revealing substantial variation across teams and events. Building on that foundation, we pre‑register two complementary dimensions of distributional impacts. First, the vertical dimension (expertise ladder): whether AI narrows performance gaps by disproportionately lifting less‑experienced participants (equalizer) or widens gaps by enabling experts to better leverage tools (amplifier). Second, the horizontal dimension (cross‑discipline): whether AI reduces the penalty from working outside one’s primary discipline (out‑of‑discipline, OOD) when reproducing studies across Economics, Political Science, and Psychology. These questions matter for pedagogy, workforce development, and equity: vertical compression would support broad inclusion strategies; horizontal compression would support cross‑field mobility and knowledge diffusion; in both cases, amplification would call for targeted training and governance to avoid widening disparities.
 
-We keep tasks, instructions, and grading rubrics closely aligned with prior exercises to ensure comparability while tailoring the design to individual-level randomization within strata and a discipline-tagged task pool. The design isolates intent-to-treat effects within expertise tiers and introduces an orthogonal OOD contrast by allocating approximately 30% of non-undergraduate participants to an outside-discipline article while keeping all undergraduates inside their primary field. This enables transparent tests of heterogeneous effects across tiers (vertical) and along the OOD dimension (horizontal). To support interpretability, we pre-specify a compact outcome set (levels, timing, error detection, and referee/report assessments) and a small list of precision-enhancing controls; discipline fixed effects are nested within article fixed effects and are thus absorbed in all models.
+We keep tasks, instructions, and grading rubrics closely aligned with prior exercises to ensure comparability while tailoring the design to individual-level randomization within strata and a discipline-tagged task pool. The design isolates intent-to-treat effects within expertise tiers and introduces an orthogonal OOD contrast by allocating approximately 30% of non-undergraduate participants to an outside-discipline article while keeping all undergraduates inside their primary field. This enables transparent tests of heterogeneous effects across tiers (vertical) and along the OOD dimension (horizontal). To support interpretability, we pre-specify a compact outcome set split between coding skills (computational reproducibility; identification of major and minor coding errors) and non-coding skills (referee appropriateness/overall judgments and robustness-check execution) alongside a small list of precision-enhancing controls; discipline fixed effects are nested within article fixed effects and are thus absorbed in all models.
 
-Several design features anchor the study and deserve to be unpacked carefully. We begin with randomization: participants enter either (i) one of five expertise strata—undergraduate, master’s, PhD, postdoc/researcher, or professor—or (ii) a three-bin grouping that combines master’s and PhD students into a graduate tier and postdocs with professors into a professor/researcher tier when sample sizes necessitate coarser cells. Within whichever stratification applies to a given event, participants are randomized 1:1 to either AI assistance or a human-only control condition. This stratification keeps comparisons within peer groups while preserving overall balance; it also fixes the reference point for the “vertical” estimands that trace how treatment effects evolve along the expertise ladder.
+Several design features anchor the study and deserve to be unpacked carefully. We begin with randomization: participants enter one of three expertise strata—undergraduate, graduate (master’s and PhD students together), or professor/researcher (postdocs and faculty). Within each stratum, participants are randomized 1:1 to either AI assistance or a human-only control condition. This stratification keeps comparisons within peer groups while preserving overall balance; it also fixes the reference point for the “vertical” estimands that trace how treatment effects evolve along the expertise ladder.
 
 Task assignment introduces the horizontal dimension. Articles arrive with a single discipline tag (Economics, Political Science, or Psychology), enabling us to contrast performance inside versus outside a participant’s primary field. We explicitly model two families of estimands—vertical (AI × tier) and horizontal (AI × out-of-discipline)—and we test each dimension on its own set of outcomes. This separation keeps the interpretation of compression tests transparent and avoids conflating discipline moves with tier moves.
 
-Outcome measurement rounds out the design. The referee-report outcome is scored by both human referees—blinded to treatment and discipline—and an AI evaluator that follows the same rubric. The rubric distinguishes an Appropriateness indicator (binary) and six 0–5 scored dimensions: summary accuracy, contribution placement within the literature, diagnosis of weaknesses, actionability of recommendations, clarity and structure of the writing, and an overall holistic assessment. Section “Grading Rubric” details the anchors that guide human judgments, while Appendix “AI Referee Prompt” reproduces the corresponding instructions for the AI grader, ensuring that communication quality is assessed consistently across arms.
+Outcome measurement rounds out the design. Coding outcomes combine a binary indicator for successful computational reproducibility with the counts of major and minor coding errors flagged during replication. Non-coding outcomes focus on communication and judgment: human referees—blinded to treatment and discipline—and a parallel AI grader each record whether the submission is appropriate and assign an overall 0–5 score, while participants’ robustness logs record whether they execute at least one or at least two qualifying checks. Section “Grading Rubric” details the anchors that guide human judgments, while Appendix “AI Referee Prompt” reproduces the corresponding instructions for the AI grader, ensuring that communication quality is assessed consistently across arms.
 
-Our design choices address practical concerns. First, measurement: we standardize the classification of major/minor errors and use independent human and AI judges for referee outcomes to triangulate communication quality, with blinding to treatment and discipline. We also collect participants’ robustness proposals and implementations as secondary outcomes to contextualize main effects (not part of primary inference families). Second, scope and external validity: by spanning multiple events, software ecosystems (R/Stata/Python), a broad experience range (undergraduate to professor), and three disciplines, we gauge how AI assistance interacts with realistic heterogeneity in tools, backgrounds, and fields. These features, combined with preregistration, separate multiplicity control for the vertical and horizontal families, and a limited set of pre‑specified estimands, aim to balance credibility with informativeness.
+Our design choices address practical concerns. First, measurement: we standardize the classification of major/minor errors and use independent human and AI judges for referee outcomes to triangulate communication quality, with blinding to treatment and discipline. We also track the execution of robustness checks as part of the non-coding skill set to contextualize main effects. Second, scope and external validity: by spanning multiple events, software ecosystems (R/Stata/Python), a broad experience range (undergraduate to professor), and three disciplines, we gauge how AI assistance interacts with realistic heterogeneity in tools, backgrounds, and fields. These features, combined with preregistration, separate multiplicity control for the vertical and horizontal families, and a limited set of pre‑specified estimands, aim to balance credibility with informativeness.
 
 # Research Questions and Hypotheses
 
-This study addresses three linked questions. First, we ask whether AI assistance compresses or widens the expertise gradient by comparing treatment effects across the five pre-defined tiers and, when applicable, across the three-category grouping; this provides the “vertical” lens that motivates the stratified randomization. Second, we investigate whether AI attenuates the penalty from tackling a problem outside one’s primary discipline, thereby capturing “horizontal” mobility across Economics, Political Science, and Psychology. Third, we consider the intent-to-treat contrast averaged across all participants, which anchors the benchmark effect size against which heterogeneous responses are interpreted.
+This study addresses three linked questions. First, we ask whether AI assistance compresses or widens the expertise gradient by comparing treatment effects across the three pre-defined tiers; this provides the “vertical” lens that motivates the stratified randomization. Second, we investigate whether AI attenuates the penalty from tackling a problem outside one’s primary discipline, thereby capturing “horizontal” mobility across Economics, Political Science, and Psychology. Third, we consider the intent-to-treat contrast averaged across all participants, which anchors the benchmark effect size against which heterogeneous responses are interpreted.
 
-The corresponding hypotheses follow naturally. H1 posits that access to AI increases the probability of a successful reproduction and shortens the time required to reach that milestone. H2 states that any gains are at least as large for undergraduates and master’s students as for postdocs and professors, implying a compression of tier gaps. H2b mirrors this logic across disciplines, anticipating that AI shrinks the outside-of-discipline penalty for success rates, time, and error detection. H3 focuses on quality control, predicting that AI exposure raises the detection of both major and minor coding errors. Each hypothesis is tested within the relevant estimand family, with multiplicity handled as described above.
+The corresponding hypotheses follow naturally. H1 posits that access to AI increases coding performance—raising the probability of a successful reproduction while lowering major and minor coding errors. H2 states that any gains are at least as large for undergraduates as for graduate students and professors/researchers, implying a compression of tier gaps in coding outcomes. H2b mirrors this logic across disciplines, anticipating that AI shrinks the outside-of-discipline penalty for the same coding skills. H3 focuses on non-coding capabilities, predicting that AI exposure improves referee appropriateness/overall judgments and increases the share of participants executing qualifying robustness checks. Each hypothesis is tested within the relevant estimand family, with multiplicity handled as described below.
 
-Throughout the document we rely on several recurring definitions. “Reproduction success” means the participant’s final output matches the pre-specified focal result within the documented tolerance; adjudication follows the rubric in Section “Grading Rubric.” “Time-to-success” records the minutes from the start of the session until the first successful reproduction, with non-successes right-censored at 420 minutes. “Error detection” counts correctly identified coding errors and distinguishes between major issues—those that would alter the substantive result—and minor issues that affect presentation or reproducibility without changing the estimate. “Communication quality” aggregates the referee rubric components described earlier, combining the Appropriateness indicator with six scored dimensions of the written assessment. Finally, “out-of-discipline (OOD)” labels any case in which the task’s discipline tag differs from the participant’s self-reported primary discipline.
+Throughout the document we rely on several recurring definitions. “Reproduction success” means the participant’s final output matches the pre-specified focal result within the documented tolerance; adjudication follows the rubric in Section “Grading Rubric.” “Error detection” counts correctly identified coding errors and distinguishes between major issues—those that would alter the substantive result—and minor issues that affect presentation or reproducibility without changing the estimate. “Communication quality” focuses on the Appropriateness indicator (binary) and the overall 0–5 score derived from the referee rubric; the underlying rubric is available to judges but only these two statistics enter the preregistered estimands. “Robustness execution” records whether participants implement at least one or at least two robustness checks that meet the pre-specified criteria. Finally, “out-of-discipline (OOD)” labels any case in which the task’s discipline tag differs from the participant’s self-reported primary discipline.
 
 # Experimental Design
 
-We recruit participants across the five canonical strata—undergraduates, master’s students, PhD students, postdocs/researchers, and professors—and observe each in a single, timed, one-day session. When registration numbers for a given event would leave some strata sparsely populated, we collapse to the three-tier grouping (undergraduate, graduate student, professor/researcher) for randomization while continuing to track individual titles. Every participant attempts to reproduce one pre-specified result using the same software ecosystems as the original studies (R, Stata, or Python) within a seven-hour working window. The window mirrors prior AI Replication Games, where most teams completed their submissions within seven hours while still allowing careful documentation. We randomly assign access to AI assistance (ChatGPT Plus with tools) within the relevant strata and events. Participants in the control arm pledge not to use AI tools. Any deviations are documented and, when material, addressed through the pre-specified per-protocol sensitivity analyses. Human referees are blinded to both treatment and discipline, and filenames/metadata that could reveal either are redacted.
+We recruit participants across the three canonical tiers—undergraduates, graduate students (master’s and PhD), and professors/researchers (postdocs and faculty)—and observe each in a single, timed, one-day session. Randomization always occurs within these three strata while we continue to track individual titles for descriptive reporting. Every participant attempts to reproduce one pre-specified result using the same software ecosystems as the original studies (R, Stata, or Python) within a seven-hour working window. The window mirrors prior AI Replication Games, where most teams completed their submissions within seven hours while still allowing careful documentation. We randomly assign access to AI assistance (ChatGPT Plus with tools) within the relevant strata and events. Participants in the control arm pledge not to use AI tools. Any deviations are documented and, when material, addressed through the pre-specified per-protocol sensitivity analyses. Human referees are blinded to both treatment and discipline, and filenames/metadata that could reveal either are redacted.
 
 Within each event, reproduction papers are randomly assigned from a pre-curated pool once participant rosters are finalized. After the random draw, the research team audits each assigned paper to confirm that (i) the replication package includes executable code together with a README or documentation, (ii) all requisite datasets and intermediate files are accessible without additional permissions, and (iii) the combined data footprint remains tractable for local execution (target: compressed package ≤ 500 MB and memory requirements within a standard 16 GB RAM laptop). Papers that fail any check are replaced before assignments are communicated to participants.
 
 Task materials are version-controlled in `Papers/`, which stores a journal-level folder for each study together with the inventory workbook `Papers/papers.xlsx`. As of the lock, the workbook enumerates 15 studies (AJPS = 5, AEJ: Applied Economics = 5, Psychological Science = 5) with DOI identifiers and replication-package URLs. Each journal folder contains the published article (`paper.pdf`) and the original replication package supplied by the journal or data repository; where only code is distributed (for example, “The Willingness to Pay for a Cooler Day”), the folder retains the vendor-provided archive so teams receive the same assets that were audited. This structure lets us share identical bundles across events while keeping provenance and updates transparent.
 
-The design studies vertical compression across expertise and horizontal compression across disciplines in a unified framework (run simultaneously). Each article carries a single discipline tag—Economics, Political Science, or Psychology—and participants self-report a primary discipline at registration. The task pool spans all three fields at every event. Undergraduates always receive inside-discipline papers; among graduate students, postdocs, and professors we randomly select enough individuals to ensure that approximately 30% of the overall roster (subject to feasibility) works outside their primary discipline (OOD), with the remainder kept inside. This prioritizes a fixed OOD exposure rate over per-cell balance and reflects our expectation that undergraduates benefit from staying within field during a timed replication task. We report realized counts by tier, the collapsed tier grouping described below, discipline, and OOD status prior to the analysis lock. Event×article fixed effects absorb site, tooling, and task heterogeneity; because each article maps to a single discipline, separate discipline indicators are redundant.
+The design studies vertical compression across expertise and horizontal compression across disciplines in a unified framework (run simultaneously). Each article carries a single discipline tag—Economics, Political Science, or Psychology—and participants self-report a primary discipline at registration. The task pool spans all three fields at every event. Undergraduates always receive inside-discipline papers; among graduate students and professors/researchers (postdocs and faculty) we randomly select enough individuals to ensure that approximately 30% of the overall roster (subject to feasibility) works outside their primary discipline (OOD), with the remainder kept inside. This prioritizes a fixed OOD exposure rate over per-cell balance and reflects our expectation that undergraduates benefit from staying within field during a timed replication task. We report realized counts by tier, the collapsed tier grouping described below, discipline, and OOD status prior to the analysis lock. Event×article fixed effects absorb site, tooling, and task heterogeneity; because each article maps to a single discipline, separate discipline indicators are redundant.
 
-For descriptive summaries we supplement the five-tier stratification with a collapsed `tier_2` indicator: undergraduates form the first category, master's and PhD students form a graduate grouping, and postdocs plus faculty comprise the professor/researcher tier. Events that implement three-bin randomization use this same collapsed partition for treatment assignment. Unless otherwise noted, inference continues to rely on the finest stratification available for each cohort; the collapsed measure streamlines tables and figures shared with partners.
+For descriptive summaries and replication outputs we rely on the same three-tier stratification encoded as `tier_3`: undergraduates form the first category, master's and PhD students comprise the graduate grouping, and postdocs plus faculty comprise the professor/researcher tier. Treatment assignment and inference reference this partition throughout; the finer self-reported titles enter only in descriptive appendices.
 
 ## Pre-Event Training
 
-Participants complete a 60-minute orientation, “Getting Research Done with ChatGPT Plus and Modern AI,” delivered the week before each event (slides in `Pre game/` with file `ai_research_webinar_codex_cli_v2.pdf`). The session covers (i) plain-language intuition for LLMs and prompting patterns, (ii) the capabilities of ChatGPT Plus with Advanced Data Analysis, Deep Research, and Agent Mode, (iii) an end-to-end research workflow illustrating literature reviews, data documentation, cleaning, interpretation, and writing, and (iv) guardrails for reproducible and responsible use. Demonstration prompts embedded in the deck provide copy-ready examples for literature scaffolds, data dictionaries, cleaning scripts, interpretive summaries, reviewer checklists, and Codex CLI micro-automations. The training closes with a five-point reproducibility checklist and a quick Codex CLI primer so treated participants and graders share the same vocabulary and expectations going into the sessions.
+Participants attend a 60-minute orientation the week before each event (slides in `Pre game/ai_research_webinar_codex_cli_v2.pdf`). The session focuses on logistics: how the games run, what deliverables to submit, the structure of the Excel tracking file, and expectations about documentation, timing, and referee reports. We provide a brief overview of ChatGPT Plus features so attendees understand the tools that treated participants will receive, but the emphasis is on workflow discipline, reproducibility reminders, and answering procedural questions. Randomization is revealed one day before each event so that ChatGPT Plus invitations can be activated for treated participants in advance.
 
 ## Post-Pilot Focus Groups
 
@@ -317,7 +311,7 @@ has_kx <- requireNamespace("kableExtra", quietly = TRUE)
 design <- tibble::tribble(
   ~Factor, ~Levels, ~Notes,
   "Arm", "Human-Only; AI-Assisted", "1:1 allocation within tier",
-  "Expertise tier", "UG; MA; PhD; PD; P", "Stratification (randomization blocks)",
+  "Expertise tier", "Undergraduate; Graduate; Professor/Researcher", "Stratification (randomization blocks; Graduate = MA/PhD, Professor/Researcher = postdoc/faculty)",
   "OOD status", "Inside; Outside", "Derived from participant vs task discipline"
 )
 if (has_kx) {
@@ -331,9 +325,9 @@ if (has_kx) {
 
 Randomization is implemented with a reproducible script and a fixed seed recorded in the registry; the assignment file is timestamped and stored read‑only. Allocation is concealed until check‑in, when the onsite coordinator reveals arm and task. No‑shows remain in their assigned arm for intent‑to‑treat analyses. Replacements are permitted only before the event begins and are re‑randomized using the same stratum‑specific seed. The same concealment and documentation protocol applies to inside/outside assignments. Any late swaps or deviations are logged prior to accessing outcomes.
 
-We plan to enroll roughly 300 participants across multiple events. For power, we assume a plausible tier composition (more undergraduates than postdocs/professors) rather than equal counts by tier. Simulations suggest that, with baseline success gaps between undergraduates and professors of 15–20 percentage points and AI compressing roughly 40% of that gap, we achieve at least 80% power for the vertical interactions at α = 0.05. For the horizontal dimension, we assume a baseline OOD penalty of 20–25 percentage points in the control arm and target detectable AI‑induced reductions of about 8–10 percentage points, while preserving the same overall sample size. Standard errors are clustered at the event×software level; when the number of clusters is modest we report wild‑cluster bootstrap p‑values alongside conventional ones. Table \ref{tab:power-assumptions} summarizes the core inputs; we will freeze any updates to these assumptions prior to registry lock.
+We plan to enroll roughly 300 participants across multiple events. For power, we assume a plausible tier composition (more undergraduates than postdocs/professors) rather than equal counts by tier. Simulations suggest that, with baseline success gaps between undergraduates and professors of 15–20 percentage points and AI compressing roughly 40% of that gap, we achieve at least 80% power for the vertical interactions at α = 0.05. For the horizontal dimension, we assume a baseline OOD penalty of 20–25 percentage points in the control arm and target detectable AI‑induced reductions of about 8–10 percentage points, while preserving the same overall sample size. Throughout, we rely on heteroskedasticity-robust (HC3) standard errors. Table \ref{tab:power-assumptions} summarizes the core inputs; we will freeze any updates to these assumptions prior to registry lock.
 
-The primary analysis set follows intent‑to‑treat principles and includes all randomized individuals with any outcome data. We do not impute outcomes. For success and error counts, nonresponse results in missing outcomes that are excluded from that specific regression but retained for other outcomes. For timing, non‑successes are right‑censored at the session cap (420 minutes) in survival analyses; we do not impute minutes for OLS models. For covariates only, we handle missingness as follows: categorical covariates (tier, software, prior ChatGPT familiarity, and—where used descriptively—participant and task discipline) gain an explicit “Missing” category if needed; continuous covariates (years of coding) use within‑stratum median imputation with a missingness indicator. We report outcome and covariate missingness by arm and verify robustness to listwise deletion.
+The primary analysis set follows intent‑to‑treat principles and includes all randomized individuals with any outcome data. We do not impute outcomes. For success indicators, error counts, referee measures, and robustness checks, nonresponse results in missing outcomes that are excluded from that specific regression but retained for other outcomes. For covariates only, we handle missingness as follows: categorical covariates (tier, software, prior ChatGPT familiarity, and—where used descriptively—participant and task discipline) gain an explicit “Missing” category if needed; continuous covariates (years of coding) use within‑stratum median imputation with a missingness indicator. We report outcome and covariate missingness by arm and verify robustness to listwise deletion.
 
 ```{r tbl-power, results='asis'}
 lines <- c()
@@ -347,21 +341,22 @@ lines <- c(lines, '  \\toprule')
 lines <- c(lines, '  \\textbf{Quantity} & \\textbf{Value} \\\\')
 lines <- c(lines, '  \\midrule')
 lines <- c(lines, '  Participants (N) & 300 (approximate) \\\\')
-lines <- c(lines, '  Tier composition (assumed) & UG 30--35\\%, MA 20--25\\%, PhD 20--25\\%, PD 10--15\\%, P 8--10\\% \\\\')
+lines <- c(lines, '  Tier composition (assumed) & UG 35--40\\%, Graduate 35--40\\%, Professor/Researcher 20--25\\% \\\\')
 lines <- c(lines, '  Discipline composition & $\\approx$50\\% Econ, 25\\% PolSci, 25\\% Psych \\\\')
 lines <- c(lines, '  Allocation & 1:1 within tier (AI vs Control) \\\\')
 lines <- c(lines, '  Inside vs Outside discipline & Undergrads always inside; ≈30\\% of roster assigned outside (selected from non-UG) \\\\')
-lines <- c(lines, '  Clusters for SE & Event $\\times$ software (10--20 anticipated) \\\\')
-lines <- c(lines, '  Minutes cap & 420 minutes (right-censor in survival) \\\\')
+lines <- c(lines, '  Variance estimator & HC3 heteroskedasticity-robust SEs \\\\')
 lines <- c(lines, '  \\midrule')
 lines <- c(lines, '  Vertical: control success (UG; P) & 40\\% ; 55--60\\% (assumed) \\\\')
 lines <- c(lines, '  Vertical: baseline gap (UG vs Prof) & 15--20 pp (assumed) \\\\')
 lines <- c(lines, '  Vertical: detectable compression & $\\approx$ 40\\% of gap @ 80\\% power, $\\alpha=0.05$ \\\\')
-lines <- c(lines, '  Vertical: time outcome variability & SD $\\approx$ 60 minutes \\\\')
+lines <- c(lines, '  Vertical: baseline major/minor error rates & Major 0.40--0.50; Minor 0.80--1.00 (counts per participant, illustrative) \\\\')
 lines <- c(lines, '  \\midrule')
 lines <- c(lines, '  Horizontal: OOD penalty (control) & 20--25 pp (assumed) \\\\')
 lines <- c(lines, '  Horizontal: detectable AI reduction (Success) & $\\approx$ 8--10 pp @ 80\\% power, $\\alpha=0.05$ \\\\')
-lines <- c(lines, '  Horizontal: detectable AI reduction (Minutes) & $\\approx$ 8--12 minutes @ 80\\% power (illustrative) \\\\')
+lines <- c(lines, '  Horizontal: detectable AI reduction (Major errors) & $\\approx$ 0.15--0.20 fewer errors @ 80\\% power (illustrative) \\\\')
+lines <- c(lines, '  Non-coding baseline (Appropriate; Overall 0--5) & 45--55\\% ; mean 3.0--3.3 (assumed) \\\\')
+lines <- c(lines, '  Robustness execution baseline & 55--60\\% ≥1 check; 30--35\\% ≥2 checks (assumed) \\\\')
 lines <- c(lines, '  \\midrule')
 lines <- c(lines, '  Multiplicity & Tests conducted separately within vertical and horizontal families \\\\')
 lines <- c(lines, '  Small-cluster inference & Wild-cluster bootstrap if clusters $<$ 30 (9,999 reps) \\\\')
@@ -374,13 +369,13 @@ cat(paste(lines, collapse='\n'))
 
 # Outcomes and Measurement
 
-Participants receive a discipline‑tagged article, a standardized instruction sheet, and a data/code package (as available) mirroring the original study’s setup. They are asked to reproduce a pre‑specified focal result and to document their workflow. At the end of the seven‑hour window, participants submit (i) a final result file (tables/figures or numeric outputs), (ii) executable code and a short README describing the steps taken, (iii) an error log listing any major and minor coding issues identified (with file and line references when possible), and (iv) a brief referee‑style assessment of the credibility and clarity of the reproduced evidence. Human graders (blinded to treatment and discipline) use a rubric to classify success, time to first success, and error detection, and to score each referee component (summary accuracy, literature placement, weakness diagnosis, recommendation quality, clarity, and overall assessment) as well as the Appropriateness indicator. AI‑assisted grading (for the AI referee outcomes) follows the same prompts and rubric; Appendix "AI Referee Prompt" reproduces the exact instructions, including required outputs and scoring anchors.
+Participants receive a discipline‑tagged article, a standardized instruction sheet, and a data/code package (as available) mirroring the original study’s setup. They are asked to reproduce a pre‑specified focal result and to document their workflow. At the end of the seven‑hour window, participants submit (i) a final result file (tables/figures or numeric outputs), (ii) executable code and a short README describing the steps taken, (iii) an error log listing any major and minor coding issues identified (with file and line references when possible), and (iv) a referee‑style assessment of the credibility and clarity of the reproduced evidence. The referee narrative is capped at 1,000 words and deliberately omits standalone sections on data/code availability, computational reproducibility, or code quality; participants note any blockers inside the summary or recommendations instead. Human graders (blinded to treatment and discipline) use a rubric to classify success and error detection, and to score the referee Appropriateness indicator together with an overall 0–5 assessment. AI‑assisted grading (for the AI referee outcomes) follows the same prompts and rubric; Appendix "AI Referee Prompt" reproduces the exact instructions, including required outputs and scoring anchors.
 
-We standardize these deliverables with the empty workbook `Reports/Replication_Log_Referee_Template.xlsx`, which participants fill as they work. Sheet `00_Main` captures session metadata (participant name, article identifiers, software, event, discipline tags, and the out-of-discipline flag). Sheet `01_CodingErrors` provides the structured log for major/minor issues, including timestamp, affected element, narrative justification, evidence pointer, and a minor/major classification toggle. Sheet `02_Computation` records whether the focal result was reproduced and when. Sheet `03_Robustness` allocates parallel columns for up to two robustness checks—each with motives, specification changes, original versus reproduced estimates, and interpretation—enforcing the “maximum two” rule in the protocol. Sheet `04_Referee_Report` houses the scored rubric, combining binary/0–5 entries with prompts about what to cover in the narrative. Aligning the reporting template with the PAP ensures fields are named consistently across sites and can be ingested without ad-hoc cleaning.
+We standardize these deliverables with the empty workbook `Reports/Replication_Log_Referee_Template.xlsx`, which participants fill as they work. Sheet `00_Main` captures session metadata (participant name, article identifiers, software, event, discipline tags, and the out-of-discipline flag). Sheet `01_CodingErrors` provides the structured log for major/minor issues, including timestamp, affected element, narrative justification, evidence pointer, and a minor/major classification toggle. Sheet `02_Computation` records whether the focal result was reproduced and when. Sheet `03_Robustness` allocates parallel columns for up to two robustness checks—each with motives, specification changes, original versus reproduced estimates, and interpretation—enforcing the “maximum two” rule in the protocol. Sheet `04_Referee_Report` houses the scored rubric, pairing the binary/0–5 entries with prompts limited to five narrative sections (summary, design/identification, robustness, ethics/transparency, overall assessment) and a reminder of the 1,000-word cap so that the exercise remains focused on substantive evaluation rather than coding style. Aligning the reporting template with the PAP ensures fields are named consistently across sites and can be ingested without ad-hoc cleaning.
 
 We organize outcomes into primary and secondary categories to align directly with our hypotheses and to keep inference focused. Primary outcomes capture whether participants reproduced the pre‑specified result (level), how long it took to first achieve a reproduction (timing), their ability to detect coding errors (major and minor), and performance on the structured referee rubric (Appropriateness, five content components, and an overall score). These outcomes together reflect the core goals of the exercise: getting to the right result, getting there efficiently, avoiding substantive mistakes, and communicating clearly.
 
-Secondary and exploratory outcomes provide contextual texture and mechanisms. In particular, we summarize robustness proposals and implementation, and—within the AI arm only—self-reported usage intensity via prompts/files/images/words (entered as inverse hyperbolic sine transformations). These help differentiate under‑ or over‑use patterns and support interpretation of treatment effects. Finally, two pre‑specified moderators (self‑reported years of coding and prior AI usage) enter as covariates in the main models and, where noted, as separate heterogeneity analyses; they are not outcomes themselves. The table below consolidates definitions, types, and assessment sources for quick reference; the analyses and figures throughout the plan use these exact definitions.
+Secondary and exploratory outcomes provide contextual texture and mechanisms. In particular, we summarize robustness proposals (≥1 and ≥2 checks) alongside indicators for whether participants actually implemented at least one or two qualifying checks. These measures clarify whether AI support changes both planning and execution. Finally, two pre‑specified moderators (self‑reported years of coding and prior AI usage) enter as covariates in the main models and, where noted, as separate heterogeneity analyses; they are not outcomes themselves. The table below consolidates definitions, types, and assessment sources for quick reference; the analyses and figures throughout the plan use these exact definitions.
 
 ```{r tbl-outcomes, results='asis'}
 suppressPackageStartupMessages({library(dplyr)})
@@ -389,24 +384,21 @@ suppressPackageStartupMessages({library(dplyr)})
 has_kx <- requireNamespace("kableExtra", quietly = TRUE)
 
 outcomes <- tibble::tribble(
-  ~Category,  ~Outcome,                          ~Type,          ~Measurement_Assessment,
-  "Primary",  "Success",                         "Binary",       "Core result reproduced by endline (yes/no).",
-  "Primary",  "Time-to-success",                 "Time (min)",   "Minutes until first successful reproduction (visualized via KM curves).",
-  "Primary",  "Error detection — major",         "Count",        "Number of major coding errors correctly identified (pre-defined rubric).",
-  "Primary",  "Error detection — minor",         "Count",        "Number of minor coding errors correctly identified (pre-defined rubric).",
-  "Primary",  "Referee — appropriateness",       "Binary",       "Appropriate vs. Not appropriate; human judges: A. Brodeur, J. Aparicio, D. Mikola; AI judge separately.",
-  "Primary",  "Referee — summary accuracy",      "0–5",          "0–5 (higher is better); captures fidelity of the paper summary; human score averaged across three judges; AI judge recorded separately.",
-  "Primary",  "Referee — literature placement",  "0–5",          "0–5; assesses how well the report situates the paper’s contribution in the literature; human score averaged across three judges; AI judge recorded separately.",
-  "Primary",  "Referee — weakness diagnosis",    "0–5",          "0–5; evaluates identification and prioritization of key weaknesses or threats to validity; human score averaged across three judges; AI judge recorded separately.",
-  "Primary",  "Referee — recommendations",       "0–5",          "0–5; measures specificity and actionability of suggested fixes or robustness checks; human score averaged across three judges; AI judge recorded separately.",
-  "Primary",  "Referee — clarity",               "0–5",          "0–5; judges organization, tone, and clarity of the write-up; human score averaged across three judges; AI judge recorded separately.",
-  "Primary",  "Referee — overall",               "0–5",          "0–5 composite overall assessment (not an average of components; scored directly); human score averaged across three judges; AI judge recorded separately.",
-  "Secondary","Robustness proposals — quality",  "Ordinal",      "Quality of robustness proposals (standardized rubric).",
-  "Secondary","Robustness implementations — count","Count",      "Number of robustness checks successfully implemented (standardized rubric).",
-  "Secondary","Prompt usage — count (AI arm)",    "Count",        "Self-reported prompt count (asinh transformed; AI arm only).",
-  "Secondary","Prompt usage — length (AI arm)",   "Continuous",   "Self-reported prompt length in characters (asinh transformed; AI arm only).",
-  "Moderator","Years of coding",                  "Continuous",   "Self-reported; used as moderator (not an outcome).",
-  "Moderator","Prior AI usage",                   "Categorical",  "Self-reported; used as moderator (not an outcome)."
+  ~Category,              ~Outcome,                              ~Type,        ~Measurement_Assessment,
+  "Primary (Coding)",     "Success",                             "Binary",     "Core result reproduced by endline (yes/no).",
+  "Primary (Coding)",     "Error detection — major",             "Count",      "Number of major coding errors correctly identified (pre-defined rubric).",
+  "Primary (Coding)",     "Error detection — minor",             "Count",      "Number of minor coding errors correctly identified (pre-defined rubric).",
+  "Primary (Non-coding)", "Referee appropriateness (human)",     "Binary",     "Appropriate vs. Not appropriate; human judges (blinded).",
+  "Primary (Non-coding)", "Referee overall 0–5 (human)",         "0–5",        "Holistic 0–5 assessment; human score averaged across judges.",
+  "Primary (Non-coding)", "Referee appropriateness (AI)",        "Binary",     "Appropriate vs. Not appropriate; AI judge using mirrored rubric.",
+  "Primary (Non-coding)", "Referee overall 0–5 (AI)",            "0–5",        "Holistic 0–5 assessment from AI judge using mirrored rubric.",
+  "Primary (Non-coding)", "Robustness planned ≥1",               "Binary",     "Indicator for proposing at least one qualifying robustness check (rubric-based).",
+  "Primary (Non-coding)", "Robustness planned ≥2",               "Binary",     "Indicator for proposing at least two qualifying robustness checks.",
+  "Primary (Non-coding)", "Robustness implemented ≥1",           "Binary",     "Indicator for executing at least one qualifying robustness check with code and outputs.",
+  "Primary (Non-coding)", "Robustness implemented ≥2",           "Binary",     "Indicator for executing at least two qualifying robustness checks with code and outputs.",
+  "Secondary",           "Learning (treatment × event order)",   "Interaction","Assesses whether treatment effects evolve across repeated events.",
+  "Moderator",           "Years of coding",                      "Continuous", "Self-reported; used as moderator (not an outcome).",
+  "Moderator",           "Prior AI usage",                       "Categorical", "Self-reported; included as precision control."
 )
 
 if (has_kx) {
@@ -428,7 +420,7 @@ if (has_kx) {
 }
 ```
 
-We pre-define classification of “major” versus “minor” errors and use a standardized grading rubric. As a preview of magnitudes, the table below (Table \ref{tab:branches}) reports simple means (and standard deviations) by arm, together with Welch tests for the difference in means. Figures then visualize the core outcomes and timing distributions that the analysis will focus on (Figures \ref{fig:outcomes} and \ref{fig:km}).
+We pre-define classification of “major” versus “minor” errors and use a standardized grading rubric. As a preview of magnitudes, the table below (Table \ref{tab:branches}) reports simple means (and standard deviations) by arm, together with Welch tests for the difference in means. Figures then visualize the core outcomes that the analysis will focus on (Figure \ref{fig:outcomes}).
 
 The figures referenced here are predefined mock‑ups of the panels we will produce once data are available; they are rendered using synthetic or placeholder data solely to illustrate the visual layout and expected content. Their purpose is to communicate the intended presentation of our preregistered estimands rather than to reveal any substantive pattern at this stage.
 
@@ -459,26 +451,17 @@ pw <- function(x, g1, g2) {
 
 # Outcomes (Tables 4–5 scope)
 vars <- list(
-  'Reproduction'                         = 'reproduction_i',
-  'Minutes to success'                   = 'minutes_to_success_i',
-  'Number of minor errors'               = 'minor_errors_i',
-  'Number of major errors'               = 'major_errors_i',
-  'At least one good robustness check'   = 'good_checks_i',
-  'At least two good robustness checks'  = 'two_good_checks_i',
-  'Appropriate (human)'                  = 'referee_app_human_i',
-  'Summary 0–5 (human)'                  = 'referee_summary_human_i',
-  'Literature 0–5 (human)'               = 'referee_literature_human_i',
-  'Weakness 0–5 (human)'                 = 'referee_weakness_human_i',
-  'Recommendations 0–5 (human)'          = 'referee_recommendations_human_i',
-  'Clarity 0–5 (human)'                  = 'referee_clarity_human_i',
-  'Overall 0–5 (human)'                  = 'referee_overall_human_i',
-  'Appropriate (AI)'                     = 'referee_app_ai_i',
-  'Summary 0–5 (AI)'                     = 'referee_summary_ai_i',
-  'Literature 0–5 (AI)'                  = 'referee_literature_ai_i',
-  'Weakness 0–5 (AI)'                    = 'referee_weakness_ai_i',
-  'Recommendations 0–5 (AI)'             = 'referee_recommendations_ai_i',
-  'Clarity 0–5 (AI)'                     = 'referee_clarity_ai_i',
-  'Overall 0–5 (AI)'                     = 'referee_overall_ai_i'
+  'Reproduction'                              = 'reproduction_i',
+  'Number of minor errors'                    = 'minor_errors_i',
+  'Number of major errors'                    = 'major_errors_i',
+  'Planned ≥1 robustness check'               = 'good_checks_i',
+  'Planned ≥2 robustness checks'              = 'two_good_checks_i',
+  'Implemented ≥1 robustness check'           = 'implemented_check_1_i',
+  'Implemented ≥2 robustness checks'          = 'implemented_check_2_i',
+  'Appropriate (human)'                       = 'referee_app_human_i',
+  'Overall 0–5 (human)'                       = 'referee_overall_human_i',
+  'Appropriate (AI)'                          = 'referee_app_ai_i',
+  'Overall 0–5 (AI)'                          = 'referee_overall_ai_i'
 )
 
 fallback_h <- if ('referee_score_human_i' %in% names(ind)) ind$referee_score_human_i else rep(0, nrow(ind))
@@ -570,10 +553,9 @@ if (!is.null(ind) && all(c('participant_discipline','task_discipline') %in% name
 }
 ```
 
-```{r fig-outcomes, fig.cap='Primary outcomes (levels): reproduction and errors, plus usage context. Notes: Four-panel layout with (top-left) reproduction rates (raw), (top-right) prompt distribution (usage), (bottom-left) major errors (raw), (bottom-right) minor errors (raw). Difference-style plots are intentionally omitted. \\label{fig:outcomes}', fig.show='hold', out.width='45%', fig.pos='H'}
-# Four-panel (levels): reproduction (raw), prompt usage, major errors (raw), minor errors (raw)
+```{r fig-outcomes, fig.cap='Primary outcomes (levels): reproduction and coding errors. Notes: Panels display reproduction rates (raw) alongside major and minor error counts. Difference-style plots are intentionally omitted. \\label{fig:outcomes}', fig.show='hold', out.width='45%', fig.pos='H'}
+# Panels: reproduction (raw), major errors (raw), minor errors (raw)
 files <- c('reproduction rates (raw).pdf',
-           'prompt distribution.pdf',
            'major errors (raw).pdf',
            'minor errors (raw).pdf')
 knitr::include_graphics(ensure_sanitized_figures(files))
@@ -610,22 +592,16 @@ if (!is.null(ind) && all(c('participant_discipline','task_discipline') %in% name
 
 ## Grading Rubric (Operational Definitions)
 
-Success and timing
+Coding skills
 - Success (binary): “Yes” when the participant’s final output matches the pre‑specified focal result within documented tolerance (numeric threshold or visual equivalence for figures), with code that runs cleanly to produce the output. Partial or alternative results do not count.
-- Time‑to‑success: Minutes from start until first successful reproduction; right‑censored at 420 minutes for non‑successes. Recorded from code logs and submissions.
-
-Error detection
 - Major error (count): Any coding/data/model issue that, once corrected, changes the focal result’s sign, statistical significance, or substantive interpretation; for example a wrong sample filter or an omitted transformation that alters the reported effect size. Issues that could matter but do not demonstrably affect the focal estimate are coded as minor.
 - Minor error (count): Formatting, non‑substantive code, or reproducibility issues that do not change the focal result. Examples: mislabeled axes; non‑deterministic seed; inefficient code without impact on estimate.
 
-Referee/report outcomes
+Non-coding skills
 - Appropriateness (binary): “Appropriate” when the report accurately identifies whether the reproduced evidence supports the original claim, flags substantive issues if present, and substantiates claims with code/snippets or references to outputs.
-- Summary accuracy (0–5): Fidelity of the paper summary. 0=Missing or incorrect; 1=Material inaccuracies; 2=Partial coverage with errors; 3=Correct but thin; 4=Comprehensive and precise; 5=Comprehensive, precise, and highlights key quantitative details.
-- Literature placement (0–5): Ability to situate the reproduced result within the relevant literature. Same anchors as above (0=missing/incorrect through 5=exceptional and well justified), focusing on comparative framing and contextualization.
-- Weakness diagnosis (0–5): Identification and prioritization of substantive weaknesses or threats to validity. Anchors follow the same scale, emphasizing whether weaknesses are material, supported, and prioritized.
-- Recommendations (0–5): Specificity and actionability of suggested fixes, robustness checks, or next steps. Anchors follow the same 0–5 scale with 5 meaning clear, prioritized, and feasible guidance.
-- Clarity (0–5): Organization, tone, and readability of the write-up. Anchors again follow the 0–5 scale with 5 indicating concise, professional communication.
-- Overall (0–5): Holistic assessment of the referee report quality (not a mechanical average of components). Anchors use the same 0–5 scale.
+- Overall (0–5): Holistic assessment of the referee report quality (not a mechanical average of component scores). Anchors follow the referee rubric’s 0–5 scale, where 0 denotes missing/incorrect and 5 denotes comprehensive, well-argued feedback.
+- Planned robustness checks: Indicators capturing whether the participant proposes at least one or at least two robustness checks that satisfy the pre-specified rubric (clear motivation, documented specification change, comparison to the focal estimate, and concise interpretation).
+- Implemented robustness checks: Indicators capturing whether the participant successfully executes at least one or at least two qualifying checks, documented with code and resulting estimates.
 
 Human graders apply these definitions blind to treatment and discipline; disagreements are reconciled via consensus. The same rubric is prompted to the AI judge for the AI‑referee outcomes.
 
@@ -669,7 +645,6 @@ if (!is.null(ind) && all(c('participant_discipline','task_discipline') %in% name
   lines <- c(lines, '  \\midrule')
   rows <- c(
     mk('Reproduction','reproduction_i'),
-    mk('Minutes to success','minutes_to_success_i'),
     mk('Minor errors','minor_errors_i'),
     mk('Major errors','major_errors_i')
   )
@@ -682,39 +657,14 @@ if (!is.null(ind) && all(c('participant_discipline','task_discipline') %in% name
 }
 ```
 
-```{r fig-km, fig.cap='Time-to-success: Kaplan–Meier by arm. Notes: Survival curves stratified by treatment (Control vs. ChatGPT+). \\label{fig:km}', out.width='60%', fig.pos='H'}
-suppressPackageStartupMessages({library(dplyr); library(ggplot2); library(survival); library(ggsurvfit)})
-ind <- tryCatch(readRDS('data/AI individuals.rds'), error = function(e) NULL)
-if (!is.null(ind)) {
-  survdat <- ind %>% transmute(time = minutes_to_success_i,
-                               status = as.integer(reproduction_i==1),
-                               treatment = factor(ifelse(treatment==1, 'ChatGPT+', 'Control'),
-                                                  levels = c('Control','ChatGPT+')))
-  if (sum(!is.na(survdat$time) & !is.na(survdat$status)) > 0) {
-    fit <- survfit(Surv(time, status) ~ treatment, data = survdat)
-    print(ggsurvfit(fit) +
-      labs(x = 'Minutes', y = 'Survival (not yet reproduced)') +
-      scale_color_manual(values = c('Control' = '#333333', 'ChatGPT+' = '#1f77b4'), guide = guide_legend(title = NULL)) +
-      theme_minimal(base_size = 12) +
-      theme(legend.position = 'bottom'))
-  }
-}
-```
-
-\FloatBarrier
-
-<!-- Removed time-to milestone panels to avoid redundancy with KM curves. -->
-
-We will interpret Figure \ref{fig:outcomes} as the primary visualization of level outcomes (H1 and H3) and Figure \ref{fig:km} as complementary evidence on timing. We omit difference-style and cumulative milestone panels to reduce redundancy and focus attention on the preregistered estimands.
+We will interpret Figure \ref{fig:outcomes} as the primary visualization of coding outcomes (reproduction and error rates) with accompanying usage context. Difference-style and cumulative milestone panels are omitted to focus attention on the preregistered estimands.
 
 
 # Controls (Covariates and Stratification)
 
 Table \ref{tab:controls} summarizes the covariates and fixed effects we pre‑specify for precision and design alignment. We use a compact, stable set that mirrors the randomization scheme and absorbs systematic heterogeneity without overfitting.
 
-We include a small, pre‑specified set of controls to improve precision and absorb systematic differences that are not of direct interest. Stratification by expertise tier (Undergraduate, Master’s, PhD, Postdoc, Professor) reflects our design and is included as dummies in the main specification so that treatment effects are identified within tier; the interaction with treatment captures heterogeneous effects along the expertise ladder. Event and article fixed effects absorb site‑ and task‑specific differences. Software indicators (R/Stata/Python) capture baseline workflow differences across toolchains. Finally, self‑reported years of coding and prior AI familiarity improve precision and help stabilize estimates across events.
-
-Two variables play a dual role as moderators in pre‑specified secondary analyses: (i) years of coding (interacted with treatment), and (ii) within‑AI usage measures (prompts, files, images, words) which we study only in the AI arm to characterize under‑/over‑use patterns. These moderators are always treated as covariates in the main models; the secondary analyses are reported separately and do not change the main estimands.
+We include a small, pre‑specified set of controls to improve precision and absorb systematic differences that are not of direct interest. Stratification by expertise tier (Undergraduate, Graduate, Professor/Researcher) reflects our design and is included as dummies in the main specification so that treatment effects are identified within tier; the interaction with treatment captures heterogeneous effects along the expertise ladder. Event and article fixed effects absorb site‑ and task‑specific differences. Software indicators (R/Stata/Python) capture baseline workflow differences across toolchains. Finally, self‑reported years of coding and prior AI familiarity improve precision and help stabilize estimates across events. Years of coding also serves as the pre‑specified continuous moderator in secondary analyses; the resulting interaction terms do not alter the main ITT estimands.
 
 ```{r tbl-controls, results='asis'}
 suppressPackageStartupMessages(library(dplyr))
@@ -722,14 +672,13 @@ has_kx <- requireNamespace("kableExtra", quietly = TRUE)
 
 controls <- tibble::tribble(
   ~Variable,          ~Role,            ~Type,         ~Coding_or_Levels,                               ~Notes,
-  "Expertise tier",   "Stratification; control", "Categorical", "Undergrad, Master’s, PhD, Postdoc, Professor", "Tier dummies in main specs; interacted with AI (heterogeneity).",
+  "Expertise tier",   "Stratification; control", "Categorical", "Undergrad, Graduate, Professor/Researcher", "Tier dummies in main specs; Graduate = MA/PhD, Professor/Researcher = postdoc/faculty; interacted with AI (heterogeneity).",
   "Event",            "Fixed effect",  "Categorical", "One FE per event",                              "Absorbs site/time differences (not a parameter of interest).",
   "Article",          "Fixed effect",  "Categorical", "One FE per task/article",                      "Absorbs task-specific difficulty/fit (not a parameter).",
   "Software",         "Control",       "Categorical", "R, Stata, Python",                              "Preferred software indicator (workflow baseline).",
   "Years of coding",  "Control; moderator", "Continuous",  "Self-reported years",                        "Improves precision; interacted with AI in secondary (yrs×AI).",
   "Prior ChatGPT familiarity", "Control",   "Categorical", "None, Some, Heavy",                             "Self‑reported familiarity with ChatGPT/AI tools.",
-  "Usage (AI arm)",   "Moderator (AI only)", "Continuous",  "Self-reported prompts/files/images/words (asinh)",  "Secondary/appendix within AI arm; not a control in main ITT.",
-  "Clustering",       "Estimation setting", "—",          "SE clustered by event×software",              "Variance estimation (not a control)."
+  "Variance estimator", "Estimation setting", "—",           "HC3 heteroskedasticity-robust SEs",             "Used for all reported models."
 )
 
 if (has_kx) {
@@ -756,15 +705,15 @@ if (has_kx) {
 
 # Statistical Analysis Plan
 
-This section lays out our estimands and modeling approach for the two preregistered dimensions of interest—vertical (expertise tier) and horizontal (out‑of‑discipline, OOD)—and clarifies how outcome types map to link functions and fixed‑effect structure. We begin with intent‑to‑treat (ITT) specifications and then describe the interaction terms that capture compression: AI × tier for vertical and AI × OOD for horizontal. Event×article fixed effects absorb site/tool and task heterogeneity; standard errors cluster at the event×software level, and when the number of clusters is modest we complement conventional inference with wild‑cluster bootstrap. We control multiplicity separately within the vertical and horizontal families using Holm’s method at α = 0.05.
+This section lays out our estimands and modeling approach for the two preregistered dimensions of interest—vertical (expertise tier) and horizontal (out‑of‑discipline, OOD)—and clarifies how outcome types map to link functions and fixed‑effect structure. We begin with intent‑to‑treat (ITT) specifications and then describe the interaction terms that capture compression: AI × tier for vertical and AI × OOD for horizontal. Event×article fixed effects absorb site/tool and task heterogeneity; all models report HC3 heteroskedasticity-robust standard errors. We control multiplicity separately within the vertical and horizontal families using Holm’s method at α = 0.05.
 
-Let $Y_i$ denote a pre‑specified outcome (success; minutes to success; error counts; referee‑report assessments). We estimate ITT effects in a tier‑interaction framework that allows the AI effect to vary with expertise. Formally,
+Let $Y_i$ denote a pre‑specified outcome (reproduction success; counts of minor or major coding errors; referee appropriateness; referee overall score; robustness-check indicators). We estimate ITT effects in a tier‑interaction framework that allows the AI effect to vary with expertise. Formally,
 
 $$
 Y_i \,=\, \beta_0 \, + \, \beta_1 A_i \, + \, \sum_s \gamma_s\,\mathbb{1}\{\mathrm{Tier}_i=s\} \, + \, \sum_s \delta_s\, A_i\,\mathbb{1}\{\mathrm{Tier}_i=s\} \, + \, X_i'\theta \, + \, \lambda_{e(i)\times s(i)} \, + \, \varepsilon_i,
 $$
 
-where $A_i$ is the treatment indicator, $\lambda_{e(i)\times s(i)}$ are event-by-software fixed effects, and $X_i$ collects the pre-specified controls (years of coding and prior AI familiarity). For binary outcomes (success; appropriate referee) we estimate linear probability models; for continuous outcomes (minutes; referee component and overall 0–5 scores) we use OLS; and for counts (minor/major errors) we fit a Poisson GLM with a log link:
+where $A_i$ is the treatment indicator, $\lambda_{e(i)\times s(i)}$ are event-by-software fixed effects, and $X_i$ collects the pre-specified controls (years of coding and prior AI familiarity). Binary outcomes (reproduction, referee appropriateness, robustness indicators) are estimated with linear probability models; continuous outcomes (overall 0–5 scores) use OLS; and counts (minor/major errors) use a Poisson GLM with a log link:
 
 $$
 \mathbb{E}[Y_i\mid\cdot] \,=\, \exp\!\left( \beta_0 + \beta_1 A_i + \sum_s \gamma_s\,\mathbb{1}\{\mathrm{Tier}_i=s\} + \sum_s \delta_s\, A_i\,\mathbb{1}\{\mathrm{Tier}_i=s\} + X_i'\theta + \lambda_{e(i)\times s(i)} \right).
@@ -772,9 +721,9 @@ $$
 
 Horizontal compression estimands. Let $D_i$ denote an indicator for receiving a task outside the participant’s primary discipline (OOD). We test whether AI reduces the OOD penalty by augmenting the main models with $D_i$ and $A_i\times D_i$: $Y_i = \cdots + \beta_2 D_i + \beta_3 (A_i\times D_i) + \varepsilon_i$. The coefficient $\beta_3$ captures horizontal compression (a smaller penalty, or a gain, when outside). Article indicators absorb discipline effects because tasks carry a single discipline tag.
 
-Interpretation and outcome‑specific notes. In all tables, the “AI‑Assisted” row reports the ITT contrast for participants in the baseline tier or inside‑discipline case; the interaction rows report how that contrast varies along tiers (vertical) or OOD (horizontal). Minutes are modeled via OLS and visualized with Kaplan–Meier curves; we will also report nonparametric log‑rank tests and emphasize right‑censoring at 420 minutes. For counts, we fit Poisson models and check over‑dispersion (deviance/df); if material, we will re‑estimate with a negative binomial link as a robustness check.
+Interpretation and outcome‑specific notes. In all tables, the “AI‑Assisted” row reports the ITT contrast for participants in the baseline tier or inside‑discipline case; the interaction rows report how that contrast varies along tiers (vertical) or OOD (horizontal). For counts, we check over‑dispersion (deviance/df) and, if material, re‑estimate with a negative binomial link as a robustness check.
 
-Multiplicity. We pre‑register two primary families and control the family‑wise error rate within each using Holm’s method at $\alpha=0.05$: (i) Vertical family: the four primary outcomes in the tier‑interaction models (AI main and AI×tier); (ii) Horizontal family: the four primary outcomes in the OOD‑interaction models (AI main and AI×OOD). Referee outcomes and years‑of‑coding heterogeneity are secondary.
+Multiplicity. We pre‑register two primary outcome families and control the family‑wise error rate within each using Holm’s method at $\alpha=0.05$: (i) Coding family: reproduction, minor errors, and major errors in the tier‑interaction and OOD‑interaction models (AI main and AI×moderator). (ii) Non-coding family: referee appropriateness (human and AI), referee overall scores (human and AI), and robustness execution (≥1, ≥2 checks). Years‑of‑coding heterogeneity, usage measures, and other ancillary analyses are secondary.
 
 To assess the success of randomization and support the modeling choices, we report balance on all individual-level controls used in the specification. The table below (Table \ref{tab:balance}) shows means (standard deviations) by arm and Welch tests for the difference in means.
 
@@ -785,6 +734,12 @@ ind <- readRDS('data/AI individuals.rds')
 ind <- ind %>% mutate(
   arm = factor(ifelse(treatment==1, 'AI-Assisted','Human-Only'), levels = c('Human-Only','AI-Assisted')),
   tier = factor(tier, levels = c('UG','MA','PhD','PD','P')),
+  tier_3 = factor(case_when(
+    tier == 'UG' ~ 'UG',
+    tier %in% c('MA','PhD') ~ 'GR',
+    tier %in% c('PD','P') ~ 'PR',
+    TRUE ~ NA_character_
+  ), levels = c('UG','GR','PR')),
   software3 = factor(preferred_software, levels = c('R','Stata','Python')),
   prior_gpt_familiarity = factor(prior_gpt_familiarity, levels = c('None','Some','Heavy'))
 )
@@ -804,7 +759,8 @@ mk_row <- function(x, label){
   sprintf('%s & %s & %s & %s \\\\ [1em]', label, cell_ms(mH,sH), cell_ms(mA,sA), cell_dp(d,p))
 }
 
-lab_tier <- c(UG = 'Undergraduate', MA = "Master's", PhD = 'PhD', PD = 'Postdoc', P = 'Professor')
+# display labels for the three-tier grouping
+lab_tier3 <- c(UG = 'Undergraduate', GR = 'Graduate', PR = 'Professor/Researcher')
 
 lines <- c()
 lines <- c(lines, '\\begin{table}[H]')
@@ -820,11 +776,11 @@ lines <- c(lines, '  \\midrule')
 # Years of coding (continuous)
 lines <- c(lines, mk_row(ind$years_coding, 'Years of coding'))
 
-# Tier (five dummies)
-for (tt in levels(ind$tier)) {
+# Tier (three dummies)
+for (tt in levels(ind$tier_3)) {
   if (!is.na(tt)) {
-    x <- as.integer(ind$tier == tt)
-    lines <- c(lines, mk_row(x, sprintf('Tier: %s', lab_tier[[tt]])))
+    x <- as.integer(ind$tier_3 == tt)
+    lines <- c(lines, mk_row(x, sprintf('Tier: %s', lab_tier3[[tt]])))
   }
 }
 
@@ -854,7 +810,7 @@ lines <- c(lines, '\\end{table}')
 cat(paste(lines, collapse='\n'))
 ```
 
-For time‑to‑event (minutes to success), we present nonparametric Kaplan–Meier curves by arm and report the log‑rank test for equality of survival functions. In all models, we use heteroskedasticity‑robust standard errors clustered at the event–software level. We report coefficient estimates with 95% confidence intervals for the main effect $\beta_1$ and the tier interactions $\delta_s$, and we conduct the pre‑specified compression test on the interaction terms. As a sensitivity check, we will also provide wild‑cluster bootstrap p‑values when the number of clusters is modest.
+In all models we use HC3 heteroskedasticity‑robust standard errors. Binary outcomes (reproduction, referee appropriateness, robustness indicators) are estimated with linear probability models; counts of major/minor errors rely on Poisson specifications; and the continuous referee overall score uses OLS. We report coefficient estimates with 95% confidence intervals for the main effect $\beta_1$ and the tier interactions $\delta_s$, and we conduct the pre‑specified compression test on the interaction terms.
 
 Heterogeneity and secondary analyses follow two paths. First, we replace tier dummies with a continuous moderator (years of coding) interacted with treatment to trace a dose–response. Second, within the AI arm only, we relate outcomes to self-reported usage intensity (prompts/files/images/words, entered as inverse hyperbolic sine transforms) to characterize under‑ and over‑use; these are descriptive and do not alter the main ITT estimands. We also consider event‑order interactions to gauge learning across events.
 
@@ -862,93 +818,40 @@ Heterogeneity and secondary analyses follow two paths. First, we replace tier du
 
 For clarity and symmetry, we present vertical (tier‑based) estimates first, followed by parallel horizontal (AI × out‑of‑discipline) estimates using the same outcomes and table layout. Figures and descriptives mirror this sequence.
 
-We present results in three parts that map directly to the research questions. First, we report intent‑to‑treat effects of AI access on the primary outcomes, with expertise‑tier interactions to quantify distributional patterns (equalizer vs. amplifier). Second, we evaluate referee‑report outcomes to capture communication and assessment quality, paralleling the main design with human and AI judges. Third, we summarize core robustness checks that probe alternative definitions and model choices. Throughout, standard errors are clustered at the event–software level, and the coefficients are displayed with confidence intervals and a pre‑specified compression test for the interaction terms.
+We present results in two blocks that align with the preregistered outcome families—coding skills and non-coding skills—with vertical (tier) estimates first and horizontal (OOD) contrasts second. Throughout, standard errors rely on HC3 heteroskedasticity‑robust corrections, and the coefficients are displayed with confidence intervals plus the pre‑specified compression test for the interaction terms.
 
-The main table (Table \ref{tab:pap-main}) provides a compact view of the four primary outcomes: reproduction, minutes to success, and counts of minor and major errors. The AI coefficient speaks to H1 (average effect), while the interactions across tiers speak to H2 (compression). We interpret effect magnitudes jointly rather than in isolation, looking for coherence across levels, timing, and error detection. The corresponding Kaplan–Meier curves (Figure \ref{fig:km}) provide a complementary view of H1 for time‑to‑success, and are discussed alongside these estimates.
+Coding outcomes (Table \ref{tab:pap-coding}) collect reproduction success together with the counts of minor and major coding errors. The AI coefficient speaks to H1 (average effect), while the tier interactions speak to H2 (compression). We interpret effect magnitudes jointly to assess whether AI shifts both success rates and error detection in a consistent direction. Table \ref{tab:pap-coding-horizontal} mirrors this layout for the out-of-discipline estimands (H2b).
 
 ```{r tbl-main, results='asis'}
-emit_table_with_caption('output/tables/pap_main.tex',
-                        caption='Vertical results: main effects across outcomes (tier interactions; pre-analysis layout). Standard errors clustered by event–software.',
-                        label='tab:pap-main')
+emit_table_with_caption('output/tables/pap_coding.tex',
+                        caption='Coding outcomes: vertical ITT effects with tier interactions. HC3 heteroskedasticity-robust standard errors.',
+                        label='tab:pap-coding')
 ```
 
-Definition of robustness columns: “≥1 check” indicates at least one qualifying robustness check per the pre‑specified rubric; “≥2 checks” indicates at least two qualifying checks.
+Definition of robustness columns (used below): “Planned ≥1/≥2” indicate the share of participants proposing qualifying checks under the rubric; “Implemented ≥1/≥2” track the share that executed those checks with documented code and estimates.
 
 \FloatBarrier
 
-We will interpret the AI coefficient as H1, the set of interaction terms as H2, and compare magnitudes across outcomes in the same layout to assess coherence.
-
-To complement the vertical (tier‑based) heterogeneity, we report horizontal compression by interacting AI with an indicator for being outside one’s discipline (OOD). The table below mirrors the main layout and reports the AI main effect and the AI×OOD interaction for the same outcomes.
+We complement the tier-based estimates with horizontal contrasts that interact AI access with the out-of-discipline indicator (Table \ref{tab:pap-coding-horizontal}). These estimates test whether AI mitigates the OOD penalty in coding outcomes (H2b).
 
 ```{r tbl-main-horizontal, results='asis'}
-emit_table_with_caption('output/tables/pap_main_horizontal.tex',
-                        caption='Horizontal results: AI × outside-of-discipline across outcomes. Standard errors clustered by event–software.',
-                        label='tab:pap-main-horizontal')
+emit_table_with_caption('output/tables/pap_coding_horizontal.tex',
+                        caption='Coding outcomes: horizontal AI × outside-of-discipline effects. HC3 heteroskedasticity-robust standard errors.',
+                        label='tab:pap-coding-horizontal')
 ```
 
-We next examine referee-report outcomes (Table \ref{tab:referee}), which connect to the communication and assessment dimension of reproduction. We pre-specify models for the binary Appropriateness indicator alongside each of the six 0–5 component/overall scores, with results reported separately for human and AI assessors but estimated on the same right-hand side as the main specification. These results shed light on whether AI support changes not just success and speed, but also the quality of participants’ evaluation of evidence and errors (H3), and whether patterns mirror the tier-based compression observed in the main outcomes. In the Appendix, we present years-based versions of the main and referee tables (Tables \ref{tab:pap_main_years} and \ref{tab:pap_referee_years}; replacing tier with a continuous years-of-coding interaction) to complement the tier-based analysis and trace a dose–response along experience.
+Non-coding outcomes (Table \ref{tab:pap-noncoding}) track the communication and robustness dimension—referee appropriateness and overall scores from both human and AI judges, alongside indicators for planning at least one or two robustness checks and actually implementing them (H3). Table \ref{tab:pap-noncoding-horizontal} repeats the analysis for the OOD contrasts.
 
 ```{r tbl-referee, results='asis'}
-Sys.setenv(OMP_NUM_THREADS = '1')
-suppressPackageStartupMessages({library(dplyr); library(fixest)})
-ind <- readRDS('data/AI individuals.rds') %>%
-  mutate(event = factor(game),
-         article = factor(article),
-         software3 = factor(preferred_software, levels = c('R','Stata','Python')),
-         tier = factor(tier, levels = c('UG','MA','PhD','PD','P')),
-         cluster_es = interaction(event, software3, drop = TRUE))
-
-referee_rhs <- 'treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event) + i(article)'
-referee_vars_h <- c(
-  'referee_app_human_i'              = 'Appropriate (human)',
-  'referee_summary_human_i'          = 'Summary 0–5 (human)',
-  'referee_literature_human_i'       = 'Literature 0–5 (human)',
-  'referee_weakness_human_i'         = 'Weakness 0–5 (human)',
-  'referee_recommendations_human_i'  = 'Recommendations 0–5 (human)',
-  'referee_clarity_human_i'          = 'Clarity 0–5 (human)',
-  'referee_overall_human_i'          = 'Overall 0–5 (human)'
-)
-referee_vars_ai <- c(
-  'referee_app_ai_i'                 = 'Appropriate (AI)',
-  'referee_summary_ai_i'             = 'Summary 0–5 (AI)',
-  'referee_literature_ai_i'          = 'Literature 0–5 (AI)',
-  'referee_weakness_ai_i'            = 'Weakness 0–5 (AI)',
-  'referee_recommendations_ai_i'     = 'Recommendations 0–5 (AI)',
-  'referee_clarity_ai_i'             = 'Clarity 0–5 (AI)',
-  'referee_overall_ai_i'             = 'Overall 0–5 (AI)'
-)
-
-fallback_h <- if ('referee_score_human_i' %in% names(ind)) ind$referee_score_human_i else rep(0, nrow(ind))
-fallback_ai <- if ('referee_score_ai_i' %in% names(ind)) ind$referee_score_ai_i else rep(0, nrow(ind))
-for (nm in setdiff(names(referee_vars_h), names(ind))) {
-  ind[[nm]] <- fallback_h
-}
-for (nm in setdiff(names(referee_vars_ai), names(ind))) {
-  ind[[nm]] <- fallback_ai
-}
-
-mk_formula <- function(dep, rhs) stats::as.formula(paste(dep, '~', rhs))
-mk_model <- function(dep) feols(mk_formula(dep, referee_rhs), data = ind, vcov = ~cluster_es)
-models_h <- lapply(names(referee_vars_h), mk_model)
-models_ai <- lapply(names(referee_vars_ai), mk_model)
-
-write_ai_table(
-  models = c(models_h, models_ai),
-  col_titles = c(unname(referee_vars_h), unname(referee_vars_ai)),
-  file = 'output/tables/pap_referee.tex',
-  coef_mode = 'tier',
-  controls_desc = 'Event×article FE; years of coding; software; prior AI familiarity.'
-)
-
-emit_table_with_caption('output/tables/pap_referee.tex',
-  caption='Vertical results: referee report outcomes (human and AI assessments). Standard errors clustered by event–software.',
-  label='tab:referee')
+emit_table_with_caption('output/tables/pap_noncoding.tex',
+  caption='Non-coding outcomes: vertical ITT effects on referee judgments and robustness execution. HC3 heteroskedasticity-robust standard errors.',
+  label='tab:pap-noncoding')
 ```
 
 ```{r tbl-referee-horizontal, results='asis'}
-emit_table_with_caption('output/tables/pap_referee_horizontal.tex',
-  caption='Horizontal results: referee outcomes (AI × outside-of-discipline). Standard errors clustered by event–software.',
-  label='tab:referee-horizontal')
+emit_table_with_caption('output/tables/pap_noncoding_horizontal.tex',
+  caption='Non-coding outcomes: horizontal AI × outside-of-discipline effects. HC3 heteroskedasticity-robust standard errors.',
+  label='tab:pap-noncoding-horizontal')
 ```
 
 \FloatBarrier
@@ -989,7 +892,7 @@ Finally, the evolving nature of AI tools introduces temporal drift. Model update
 
 # Appendix
 
-These additional analyses extend and contextualize the main results without altering the primary estimands. We examine moderators beyond the tier‑based interactions: a continuous years‑of‑coding interaction that traces a dose–response (Tables \ref{tab:pap_main_years} and \ref{tab:pap_referee_years}), and within‑AI usage intensities (prompts, files, images, words) that help characterize under‑ and over‑use. We also provide usage‑by‑tier summaries in the AI arm (Table \ref{tab:usage-by-tier}) to illustrate whether intensity aligns with the observed treatment heterogeneity. These tables are not substitutes for the main ITT estimands; they are meant to clarify mechanisms and the consistency of patterns.
+These additional analyses extend and contextualize the main results without altering the primary estimands. We examine moderators beyond the tier‑based interactions via a continuous years‑of‑coding interaction (Tables \ref{tab:pap-coding-years} and \ref{tab:pap-noncoding-years}) and report both planned and implemented robustness activity in the appendices. These tables are not substitutes for the main ITT estimands; they are meant to clarify mechanisms and the consistency of patterns.
 
 ## AI Referee Prompt
 
@@ -1005,6 +908,7 @@ You are "AI Referee," an expert evaluator for the AI Replication Games. Your tas
 
 **General instructions**
 - Work independently—do not assume facts that are not present in the materials.
+- Keep your narrative within 1,000 words and avoid standalone sections on data/code availability, computational reproducibility, or code quality; note any such blockers inside the summary or recommendation text.
 - If critical evidence is missing, record that as a weakness and reflect it in the scores.
 - Base every judgment on the participant's reasoning and evidence; parroting the source paper without evaluation should be penalized.
 - When assigning numeric scores, use the full 0–5 range (no half points).
@@ -1064,59 +968,24 @@ Return JSON with the following fields: `appropriateness` ("Appropriate" or "Not 
 
 
 ```{r tbl-years-main, results='asis'}
-emit_table_with_caption('output/tables/pap_main_years_core.tex',
-  caption='Main outcomes with years-of-coding moderator (interaction with AI).',
-  label='tab:pap_main_years')
+emit_table_with_caption('output/tables/pap_coding_years_core.tex',
+  caption='Coding outcomes with years-of-coding moderator (interaction with AI).',
+  label='tab:pap-coding-years')
 ```
 
 ```{r tbl-years-ref, results='asis'}
-emit_table_with_caption('output/tables/pap_referee_years.tex',
-  caption='Referee outcomes with years-of-coding moderator (interaction with AI).',
-  label='tab:pap_referee_years')
+emit_table_with_caption('output/tables/pap_noncoding_years.tex',
+  caption='Non-coding outcomes with years-of-coding moderator (interaction with AI).',
+  label='tab:pap-noncoding-years')
 ```
 
 \FloatBarrier
 
 ```{r tbl-usage-by-tier, results='asis'}
-suppressPackageStartupMessages({library(dplyr)})
-ind <- readRDS('data/AI individuals.rds')
-ai <- ind %>% filter(treatment == 1)
-ai <- ai %>% mutate(tier = factor(tier, levels = c('UG','MA','PhD','PD','P')))
-lab_tier <- c(UG = 'Undergraduate', MA = "Master's", PhD = 'PhD', PD = 'Postdoc', P = 'Professor')
-
-fmt <- function(x) sprintf('%0.3f', x)
-cell_ms <- function(m, s) sprintf('\\shortstack{%s\\\\(%s)}', fmt(m), fmt(s))
-
-tiers <- levels(ai$tier)
-lines <- c()
-lines <- c(lines, '\\begin{table}[H]')
-lines <- c(lines, '  \\centering')
-lines <- c(lines, '  \\caption{Usage by expertise tier in the AI arm (mean and standard deviation).}')
-lines <- c(lines, '  \\label{tab:usage-by-tier}')
-lines <- c(lines, '  {\\scriptsize')
-lines <- c(lines, '  \\begin{tabular}{lccccc}')
-lines <- c(lines, '  \\toprule')
-lines <- c(lines, '  \\textbf{Tier} & \\textbf{Prompts} & \\textbf{Files} & \\textbf{Images} & \\textbf{Words} & \\textbf{N} \\\\')
-lines <- c(lines, '  \\midrule')
-for (tt in tiers) {
-  dat <- ai %>% filter(tier == tt)
-  mP <- mean(dat$prompts_i, na.rm = TRUE); sP <- sd(dat$prompts_i, na.rm = TRUE)
-  mF <- mean(dat$files_i,   na.rm = TRUE); sF <- sd(dat$files_i,   na.rm = TRUE)
-  mI <- mean(dat$images_i,  na.rm = TRUE); sI <- sd(dat$images_i,  na.rm = TRUE)
-  mW <- mean(dat$words_i,   na.rm = TRUE); sW <- sd(dat$words_i,   na.rm = TRUE)
-  N  <- sum(!is.na(dat$prompts_i) | !is.na(dat$files_i) | !is.na(dat$images_i) | !is.na(dat$words_i))
-  line <- sprintf('%s & %s & %s & %s & %s & %d \\\\',
-                  lab_tier[tt],
-                  cell_ms(mP, sP), cell_ms(mF, sF), cell_ms(mI, sI), cell_ms(mW, sW), N)
-  lines <- c(lines, line)
-}
-lines <- c(lines, '  \\bottomrule')
-lines <- c(lines, '  \\end{tabular}')
-lines <- c(lines, '  }')
-lines <- c(lines, '\\end{table}')
-
-cat(paste(lines, collapse='\n'))
+# Table intentionally omitted: participant usage logs are no longer collected.
 ```
+
+
 
 \FloatBarrier
 

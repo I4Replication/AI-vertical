@@ -3,9 +3,17 @@
 ############################################################
 suppressPackageStartupMessages({
   library(dplyr); library(tidyr); library(stringr); library(fixest)
-  library(ggplot2); library(ggsurvfit); library(survival); library(modelsummary)
-  library(broom)
+  library(ggplot2); library(broom)
+  if (identical(Sys.getenv("PAP_ENABLE_MODELSUMMARY"), "1") &&
+      requireNamespace("modelsummary", quietly = TRUE)) {
+    library(modelsummary)
+  } else {
+    message("Skipping modelsummary (set PAP_ENABLE_MODELSUMMARY=1 to load if available).")
+  }
 })
+
+# Fixest parallelism can trigger OpenMP shared-memory issues in sandboxed environments.
+fixest::setFixest_nthreads(1)
 
 # ----- AI-paper table helpers (classic tabular) -----
 fmt3 <- function(x) { if (is.na(x) || is.null(x)) return("—"); sprintf("% .3f", x) }
@@ -47,7 +55,7 @@ wald_compression_p <- function(m) {
   tryCatch({ fixest::wald(m, R)$p.value }, error = function(e) NA_real_)
 }
 
-# One-sided monotonic compression p-value: AI×Professor < AI×Postdoc < AI×PhD < AI×Master's
+# One-sided monotonic compression p-value: AI×Undergrad ≤ AI×Graduate ≤ AI×Professor/Researcher
 p_monotonic_tier <- function(m) {
   b <- tryCatch(coef(m), error = function(e) NULL)
   V <- tryCatch(vcov(m), error = function(e) NULL)
@@ -60,12 +68,11 @@ p_monotonic_tier <- function(m) {
     if (name2 %in% names(b)) return(which(names(b)==name2))
     return(NA_integer_)
   }
-  idx_P   <- find_idx('treatment:tierP')
-  idx_PD  <- find_idx('treatment:tierPD')
-  idx_PhD <- find_idx('treatment:tierPhD')
-  idx_MA  <- find_idx('treatment:tierMA')
-  if (any(is.na(c(idx_P, idx_PD, idx_PhD, idx_MA)))) return(NA_real_)
-  # Build difference vectors for [PD-P], [PhD-PD], [MA-PhD]
+  idx_main <- find_idx('treatment')
+  idx_GR   <- find_idx('treatment:tier_3GR')
+  idx_PR   <- find_idx('treatment:tier_3PR')
+  if (any(is.na(c(idx_main, idx_GR, idx_PR)))) return(NA_real_)
+  # Build difference vectors for [Graduate − Undergrad], [Professor/Researcher − Graduate]
   mk_p <- function(i, j){
     cvec <- rep(0, length(b)); cvec[i] <- -1; cvec[j] <- 1
     est <- sum(cvec * b)
@@ -74,36 +81,26 @@ p_monotonic_tier <- function(m) {
     z <- est / se
     1 - pnorm(z) # one-sided p for H0: diff <= 0 vs H1: diff > 0
   }
-  p1 <- mk_p(idx_P, idx_PD)
-  p2 <- mk_p(idx_PD, idx_PhD)
-  p3 <- mk_p(idx_PhD, idx_MA)
-  if (any(is.na(c(p1,p2,p3)))) return(NA_real_)
-  max(p1,p2,p3)
+  p1 <- mk_p(idx_main, idx_GR)
+  p2 <- mk_p(idx_GR, idx_PR)
+  if (any(is.na(c(p1,p2)))) return(NA_real_)
+  max(p1,p2)
 }
-write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','usage','learn','prompts','ood'),
+write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years','learn','ood'),
                            controls_desc = 'Event×article FE; years of coding; software; prior AI familiarity.',
                            dep_means = NULL) {
   coef_mode <- match.arg(coef_mode)
   K <- length(models); stopifnot(length(col_titles) == K)
   dir.create(dirname(file), showWarnings = FALSE, recursive = TRUE)
   if (coef_mode == 'tier') {
-    keep <- c('treatment','treatment:tierMA','treatment:tierPhD','treatment:tierPD','treatment:tierP')
-    labels <- c('AI-Assisted','AI × Master\'s','AI × PhD','AI × Postdoc','AI × Professor')
+    keep <- c('treatment','treatment:tier_3GR','treatment:tier_3PR')
+    labels <- c('AI-Assisted','AI × Graduate','AI × Professor/Researcher')
   } else if (coef_mode == 'years') {
     keep <- c('treatment','years_coding:treatment')
     labels <- c('AI-Assisted','AI × Years of coding')
-  } else if (coef_mode == 'usage') {
-    keep <- c('asinh(prompts_i)','asinh(files_i)','asinh(images_i)','asinh(words_i)')
-    labels <- c('asinh(prompts)','asinh(files)','asinh(images)','asinh(words)')
   } else if (coef_mode == 'learn') {
     keep <- c('treatment','treatment:event_order')
     labels <- c('AI-Assisted','AI × Event order')
-  } else if (coef_mode == 'prompts') {
-    keep <- c('asinh(prompts_i)')
-    labels <- c('asinh(prompts)')
-  } else if (coef_mode == 'software') {
-    keep <- c('treatment','software3R','software3Python','treatment:software3R','treatment:software3Python')
-    labels <- c('AI-Assisted','R','Python','AI × R','AI × Python')
   } else if (coef_mode == 'ood') {
     keep <- c('treatment','treatment:out_of_disc_i')
     labels <- c('AI-Assisted','AI × Outside-discipline')
@@ -156,7 +153,7 @@ write_ai_table <- function(models, col_titles, file, coef_mode = c('tier','years
              paste0('\\multicolumn{', K+1, '}{l}{\\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\\\'),
              paste0('\\multicolumn{', K+1, '}{l}{Controls: ', ctrl_txt, '}\\\\'))
   if (coef_mode == 'tier') {
-    lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{Compression (monotonic): one-sided p-value for increasing effects across tiers (baseline: Undergraduate).}\\\\'))
+    lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{Compression (monotonic): one-sided p-value for increasing effects across the three tiers (baseline: Undergraduate).}\\\\'))
   }
   lines <- c(lines, paste0('\\multicolumn{', K+1, '}{l}{\\sym{*} $p<0.10$, \\sym{**} $p<0.05$,  \\sym{***} $p<0.01$}\\\\'))
   lines <- c(lines, '\\end{tabular}')
@@ -188,6 +185,12 @@ ind <- ind %>%
     event_article = interaction(event, article, drop = TRUE),
     software3 = factor(preferred_software, levels = c("R","Stata","Python")),
     tier = factor(tier, levels = c("UG","MA","PhD","PD","P")),
+    tier_3 = factor(case_when(
+      tier == "UG" ~ "UG",
+      tier %in% c("MA","PhD") ~ "GR",
+      tier %in% c("PD","P") ~ "PR",
+      TRUE ~ NA_character_
+    ), levels = c("UG","GR","PR")),
     cluster_es = interaction(event, software3, drop = TRUE),
     event_order = as.integer(factor(event, levels = unique(event)))
   )
@@ -222,83 +225,76 @@ try({
 
 # Outcomes
 y_success   <- ind$reproduction_i
-y_minutes   <- ind$minutes_to_success_i
 y_minor_cnt <- ind$minor_errors_i
 y_major_cnt <- ind$major_errors_i
 
-# Main specification: OLS for binary/time, Poisson for counts
-f_ols <- reproduction_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_min <- minutes_to_success_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_pmn <- minor_errors_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_pmj <- major_errors_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+# Main specification: OLS for binary/continuous outcomes, Poisson for counts
+f_rep <- reproduction_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+f_pmn <- minor_errors_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+f_pmj <- major_errors_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
 
-m_success <- feols(f_ols, data = ind, vcov = ~cluster_es)
-m_minutes <- feols(f_min, data = ind, vcov = ~cluster_es)
-m_minor   <- fepois(f_pmn, data = ind, vcov = ~cluster_es)
-m_major   <- fepois(f_pmj, data = ind, vcov = ~cluster_es)
+m_rep   <- feols(f_rep, data = ind, vcov = 'hetero')
+m_minor <- fepois(f_pmn, data = ind, vcov = 'hetero')
+m_major <- fepois(f_pmj, data = ind, vcov = 'hetero')
 
-# Precompute robustness checks (≥1 and ≥2) to append to the main results table
-f_good <- good_checks_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_two  <- two_good_checks_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-m_good <- feols(f_good, data = ind, vcov = ~cluster_es)
-m_two  <- feols(f_two,  data = ind, vcov = ~cluster_es)
+# Precompute robustness checks (≥1 and ≥2) for the non-coding table
+f_good <- good_checks_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+f_two  <- two_good_checks_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+m_impl1 <- feols(implemented_check_1_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article),
+                 data = ind, vcov = 'hetero')
+m_impl2 <- feols(implemented_check_2_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article),
+                 data = ind, vcov = 'hetero')
+m_good <- feols(f_good, data = ind, vcov = 'hetero')
+m_two  <- feols(f_two,  data = ind, vcov = 'hetero')
 
 write_ai_table(
-  models = list(m_success, m_minutes, m_minor, m_major, m_good, m_two),
-  col_titles = c("Reproduction", "Minutes", "Minor", "Major", "At least 1 check", "At least 2 checks"),
-  file = "output/tables/pap_main.tex",
+  models = list(m_rep, m_minor, m_major),
+  col_titles = c("Reproduction", "Minor errors", "Major errors"),
+  file = "output/tables/pap_coding.tex",
   coef_mode = "tier",
   controls_desc = "Event×article FE; years of coding; software; prior AI familiarity."
 )
 
 # Horizontal compression: add AI × Outside-discipline interaction (parallel to vertical tables)
 if (TRUE) {
-  f_ols_h <- reproduction_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-  f_min_h <- minutes_to_success_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-  f_pmn_h <- minor_errors_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-  f_pmj_h <- major_errors_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-  m_success_h <- feols(f_ols_h, data = ind, vcov = ~cluster_es)
-  m_minutes_h <- feols(f_min_h, data = ind, vcov = ~cluster_es)
-  m_minor_h   <- fepois(f_pmn_h, data = ind, vcov = ~cluster_es)
-  m_major_h   <- fepois(f_pmj_h, data = ind, vcov = ~cluster_es)
+  f_rep_h <- reproduction_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+  f_pmn_h <- minor_errors_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+  f_pmj_h <- major_errors_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+  m_rep_h   <- feols(f_rep_h, data = ind, vcov = 'hetero')
+  m_minor_h   <- fepois(f_pmn_h, data = ind, vcov = 'hetero')
+  m_major_h   <- fepois(f_pmj_h, data = ind, vcov = 'hetero')
   # Debug: write term names for inspection
-  tt_dbg <- tryCatch(broom::tidy(m_success_h), error=function(e) NULL)
+  tt_dbg <- tryCatch(broom::tidy(m_rep_h), error=function(e) NULL)
   if (!is.null(tt_dbg)) {
     dir.create("output/tables", showWarnings = FALSE, recursive = TRUE)
     writeLines(paste(tt_dbg$term, collapse='\n'), "output/tables/pap_horizontal_terms.txt")
   }
-  f_good_h <- good_checks_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-  f_two_h  <- two_good_checks_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-  m_good_h <- feols(f_good_h, data = ind, vcov = ~cluster_es)
-  m_two_h  <- feols(f_two_h,  data = ind, vcov = ~cluster_es)
+  f_good_h <- good_checks_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+  f_two_h  <- two_good_checks_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+  m_good_h <- feols(f_good_h, data = ind, vcov = 'hetero')
+  m_two_h  <- feols(f_two_h,  data = ind, vcov = 'hetero')
+  m_impl1_h <- feols(implemented_check_1_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article),
+                     data = ind, vcov = 'hetero')
+  m_impl2_h <- feols(implemented_check_2_i ~ treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article),
+                     data = ind, vcov = 'hetero')
   write_ai_table(
-    models = list(m_success_h, m_minutes_h, m_minor_h, m_major_h, m_good_h, m_two_h),
-    col_titles = c("Reproduction", "Minutes", "Minor", "Major", "At least 1 check", "At least 2 checks"),
-    file = "output/tables/pap_main_horizontal.tex",
+    models = list(m_rep_h, m_minor_h, m_major_h),
+    col_titles = c("Reproduction", "Minor errors", "Major errors"),
+    file = "output/tables/pap_coding_horizontal.tex",
     coef_mode = "ood",
     controls_desc = "Event×article FE; years of coding; software; prior AI familiarity."
   )
 
 }
 
-# Referee report outcomes (human and AI assessments)
+# Referee report outcomes (human and AI assessments) -- streamlined metrics
 referee_vars_h <- c(
-  "referee_app_human_i"              = "Appropriate (human)",
-  "referee_summary_human_i"          = "Summary 0–5 (human)",
-  "referee_literature_human_i"       = "Literature 0–5 (human)",
-  "referee_weakness_human_i"         = "Weakness 0–5 (human)",
-  "referee_recommendations_human_i"  = "Recommendations 0–5 (human)",
-  "referee_clarity_human_i"          = "Clarity 0–5 (human)",
-  "referee_overall_human_i"          = "Overall 0–5 (human)"
+  "referee_app_human_i"    = "Appropriate (human)",
+  "referee_overall_human_i"= "Overall 0–5 (human)"
 )
 referee_vars_ai <- c(
-  "referee_app_ai_i"                 = "Appropriate (AI)",
-  "referee_summary_ai_i"             = "Summary 0–5 (AI)",
-  "referee_literature_ai_i"          = "Literature 0–5 (AI)",
-  "referee_weakness_ai_i"            = "Weakness 0–5 (AI)",
-  "referee_recommendations_ai_i"     = "Recommendations 0–5 (AI)",
-  "referee_clarity_ai_i"             = "Clarity 0–5 (AI)",
-  "referee_overall_ai_i"             = "Overall 0–5 (AI)"
+  "referee_app_ai_i"      = "Appropriate (AI)",
+  "referee_overall_ai_i"  = "Overall 0–5 (AI)"
 )
 fallback_h <- if ("referee_score_human_i" %in% names(ind)) ind$referee_score_human_i else rep(0, nrow(ind))
 fallback_ai <- if ("referee_score_ai_i" %in% names(ind)) ind$referee_score_ai_i else rep(0, nrow(ind))
@@ -307,44 +303,52 @@ for (nm in setdiff(names(referee_vars_ai), names(ind))) ind[[nm]] <- fallback_ai
 
 mk_formula <- function(dep, rhs) stats::as.formula(paste(dep, "~", rhs))
 fit_referee_models <- function(dep_vars, rhs) {
-  lapply(names(dep_vars), function(dep) feols(mk_formula(dep, rhs), data = ind, vcov = ~cluster_es))
+  lapply(names(dep_vars), function(dep) feols(mk_formula(dep, rhs), data = ind, vcov = 'hetero'))
 }
 
 titles_referee <- c(unname(referee_vars_h), unname(referee_vars_ai))
 
-rhs_tier <- "treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)"
+rhs_tier <- "treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)"
 models_ref_tier <- c(fit_referee_models(referee_vars_h, rhs_tier),
                      fit_referee_models(referee_vars_ai, rhs_tier))
 write_ai_table(
-  models = models_ref_tier,
-  col_titles = titles_referee,
-  file = "output/tables/pap_referee.tex",
+  models = c(models_ref_tier, list(m_good, m_two, m_impl1, m_impl2)),
+  col_titles = c(titles_referee, "At least 1 check", "At least 2 checks", "Implemented ≥1", "Implemented ≥2"),
+  file = "output/tables/pap_noncoding.tex",
   coef_mode = "tier",
   controls_desc = "Event×article FE; years of coding; software; prior AI familiarity."
 )
 
 # Horizontal: referee outcomes with AI × OOD
-rhs_ood <- "treatment + out_of_disc_i + treatment:out_of_disc_i + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)"
+rhs_ood <- "treatment + out_of_disc_i + treatment:out_of_disc_i + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)"
 models_ref_ood <- c(fit_referee_models(referee_vars_h, rhs_ood),
                     fit_referee_models(referee_vars_ai, rhs_ood))
 write_ai_table(
-  models = models_ref_ood,
-  col_titles = titles_referee,
-  file = "output/tables/pap_referee_horizontal.tex",
+  models = c(models_ref_ood, list(m_good_h, m_two_h, m_impl1_h, m_impl2_h)),
+  col_titles = c(titles_referee, "At least 1 check", "At least 2 checks", "Implemented ≥1", "Implemented ≥2"),
+  file = "output/tables/pap_noncoding_horizontal.tex",
   coef_mode = "ood",
   controls_desc = "Event×article FE; years of coding; software; prior AI familiarity."
 )
 
-# Referee by years (appendix): replace tier with years × AI
+# Non-coding by years (appendix): replace tier with years × AI
 rhs_years <- "treatment*years_coding + software3 + prior_gpt_familiarity + i(event_article)"
 models_ref_years <- c(fit_referee_models(referee_vars_h, rhs_years),
-                      fit_referee_models(referee_vars_ai, rhs_years))
+                      fit_referee_models(referee_vars_ai, rhs_years),
+                      list(
+                        feols(as.formula(paste("implemented_check_1_i ~", rhs_years)), data = ind, vcov = 'hetero'),
+                        feols(as.formula(paste("implemented_check_2_i ~", rhs_years)), data = ind, vcov = 'hetero'),
+                        feols(as.formula(paste("good_checks_i ~", rhs_years)), data = ind, vcov = 'hetero'),
+                        feols(as.formula(paste("two_good_checks_i ~", rhs_years)), data = ind, vcov = 'hetero')
+                      ))
 titles_referee_years <- c(paste0(unname(referee_vars_h), " (yrs)"),
-                          paste0(unname(referee_vars_ai), " (yrs)"))
+                          paste0(unname(referee_vars_ai), " (yrs)"),
+                          "Implemented ≥1 (yrs)", "Implemented ≥2 (yrs)",
+                          "Planned ≥1 (yrs)", "Planned ≥2 (yrs)")
 write_ai_table(
   models = models_ref_years,
   col_titles = titles_referee_years,
-  file = "output/tables/pap_referee_years.tex",
+  file = "output/tables/pap_noncoding_years.tex",
   coef_mode = "years",
   controls_desc = "Event×article FE; software; prior AI familiarity."
 )
@@ -352,13 +356,17 @@ write_ai_table(
 ## (moved: robustness models precomputed above to append to main table)
 
 # Appendix: robustness without event×article FE (specification check)
-f_good_nofe <- good_checks_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity
-f_two_nofe  <- two_good_checks_i ~ treatment + tier + treatment:tier + years_coding + software3 + prior_gpt_familiarity
-m_good_nofe <- feols(f_good_nofe, data = ind, vcov = ~cluster_es)
-m_two_nofe  <- feols(f_two_nofe,  data = ind, vcov = ~cluster_es)
+f_good_nofe <- good_checks_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity
+f_two_nofe  <- two_good_checks_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity
+f_impl1_nofe <- implemented_check_1_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity
+f_impl2_nofe  <- implemented_check_2_i ~ treatment + tier_3 + treatment:tier_3 + years_coding + software3 + prior_gpt_familiarity
+m_good_nofe <- feols(f_good_nofe, data = ind, vcov = 'hetero')
+m_two_nofe  <- feols(f_two_nofe,  data = ind, vcov = 'hetero')
 write_ai_table(
-  models = list(m_good_nofe, m_two_nofe),
-  col_titles = c("At least 1 check", "At least 2 checks"),
+  models = list(m_good_nofe, m_two_nofe,
+                feols(f_impl1_nofe, data = ind, vcov = 'hetero'),
+                feols(f_impl2_nofe, data = ind, vcov = 'hetero')),
+  col_titles = c("At least 1 check", "At least 2 checks", "Implemented ≥1", "Implemented ≥2"),
   file = "output/tables/pap_robustness_clarity_appendix.tex",
   coef_mode = "tier",
   controls_desc = "No event×article FE; years of coding; software; prior AI familiarity."
@@ -366,76 +374,26 @@ write_ai_table(
 
 # (combined FE vs no-FE robustness table dropped)
 
-# Secondary 1: replace tier with continuous years of coding
-f_ols2 <- update(f_ols, . ~ . - tier - treatment:tier + years_coding:treatment)
-f_min2 <- update(f_min, . ~ . - tier - treatment:tier + years_coding:treatment)
-f_pmn2 <- update(f_pmn, . ~ . - tier - treatment:tier + years_coding:treatment)
-f_pmj2 <- update(f_pmj, . ~ . - tier - treatment:tier + years_coding:treatment)
+# Coding outcomes with years-of-coding moderator
+f_rep2 <- update(f_rep, . ~ . - tier_3 - treatment:tier_3 + years_coding:treatment)
+f_pmn2 <- update(f_pmn, . ~ . - tier_3 - treatment:tier_3 + years_coding:treatment)
+f_pmj2 <- update(f_pmj, . ~ . - tier_3 - treatment:tier_3 + years_coding:treatment)
 
-m_success2 <- feols(f_ols2, data = ind, vcov = ~cluster_es)
-m_minutes2 <- feols(f_min2, data = ind, vcov = ~cluster_es)
-m_minor2   <- fepois(f_pmn2, data = ind, vcov = ~cluster_es)
-m_major2   <- fepois(f_pmj2, data = ind, vcov = ~cluster_es)
+m_rep2   <- feols(f_rep2, data = ind, vcov = 'hetero')
+m_minor2 <- fepois(f_pmn2, data = ind, vcov = 'hetero')
+m_major2 <- fepois(f_pmj2, data = ind, vcov = 'hetero')
 
 write_ai_table(
-  models = list(m_success2, m_minutes2, m_minor2, m_major2),
-  col_titles = c("Reproduction (yrs)", "Minutes (yrs)", "Minor (yrs)", "Major (yrs)"),
-  file = "output/tables/pap_main_years_core.tex",
+  models = list(m_rep2, m_minor2, m_major2),
+  col_titles = c("Reproduction (yrs)", "Minor (yrs)", "Major (yrs)"),
+  file = "output/tables/pap_coding_years_core.tex",
   coef_mode = "years",
   controls_desc = "Event×article FE; software; prior AI familiarity."
 )
 
-# Prepare AI-arm subset for prompts-only and usage-by-tier analyses
-ai <- ind %>% filter(treatment == 1)
-
-# (prompts-only table removed from PAP and code)
-
-# Appendix: usage effects within AI arm by tier (separate models per tier)
-tiers <- c("UG","MA","PhD","PD","P")
-mods_s <- list(); mods_m <- list()
-for (tt in tiers) {
-  dat <- ai %>% filter(tier == tt)
-  if (nrow(dat) >= 5) {
-    mods_s[[tt]] <- feols(reproduction_i ~ asinh(prompts_i) + asinh(files_i) + asinh(images_i) + asinh(words_i)
-                           + years_coding + software3 + prior_gpt_familiarity + i(event_article),
-                           data = dat, vcov = ~cluster_es)
-    mods_m[[tt]] <- feols(minutes_to_success_i ~ asinh(prompts_i) + asinh(files_i) + asinh(images_i) + asinh(words_i)
-                           + years_coding + software3 + prior_gpt_familiarity + i(event_article),
-                           data = dat, vcov = ~cluster_es)
-  }
-}
-mods_s <- Filter(Negate(is.null), mods_s)
-mods_m <- Filter(Negate(is.null), mods_m)
-if (length(mods_s) > 0) {
-  write_ai_table(
-    models = unname(mods_s),
-    col_titles = {
-      nm <- names(mods_s);
-      rec <- c(UG = "Undergraduate", MA = "Master's", PhD = "PhD", PD = "Postdoc", P = "Professor");
-      unname(ifelse(nm %in% names(rec), rec[nm], nm))
-    },
-    file = "output/tables/pap_usage_success_by_tier.tex",
-    coef_mode = "usage",
-    controls_desc = "Event×article FE; years of coding; software; prior AI familiarity (AI arm only)."
-  )
-}
-if (length(mods_m) > 0) {
-  write_ai_table(
-    models = unname(mods_m),
-    col_titles = {
-      nm <- names(mods_m);
-      rec <- c(UG = "Undergraduate", MA = "Master's", PhD = "PhD", PD = "Postdoc", P = "Professor");
-      unname(ifelse(nm %in% names(rec), rec[nm], nm))
-    },
-    file = "output/tables/pap_usage_minutes_by_tier.tex",
-    coef_mode = "usage",
-    controls_desc = "Event×article FE; years of coding; software; prior AI familiarity (AI arm only)."
-  )
-}
-
 # Secondary 3: learning across events (treatment x event order)
-f_learn <- reproduction_i ~ treatment*event_order + tier + years_coding + software3 + prior_gpt_familiarity + i(event_article)
-m_learn <- feols(f_learn, data = ind, vcov = ~cluster_es)
+f_learn <- reproduction_i ~ treatment*event_order + tier_3 + years_coding + software3 + prior_gpt_familiarity + i(event_article)
+m_learn <- feols(f_learn, data = ind, vcov = 'hetero')
 write_ai_table(
   models = list(m_learn),
   col_titles = c("Success (trt×order)"),
@@ -443,46 +401,3 @@ write_ai_table(
   coef_mode = "learn",
   controls_desc = "Event×article FE; years of coding; software; prior AI familiarity."
 )
-
-# Secondary 1: years of coding as moderator (replace tier)
-f_ols2 <- reproduction_i ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_min2 <- minutes_to_success_i ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_pmn2 <- minor_errors_i ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event_article)
-f_pmj2 <- major_errors_i ~ treatment*years_coding + software3 + prior_gpt_familiarity + i(event_article)
-m_success2 <- feols(f_ols2, data = ind, vcov = ~cluster_es)
-m_minutes2 <- feols(f_min2, data = ind, vcov = ~cluster_es)
-m_minor2   <- fepois(f_pmn2, data = ind, vcov = ~cluster_es)
-m_major2   <- fepois(f_pmj2, data = ind, vcov = ~cluster_es)
-write_ai_table(
-  models = list(m_success2, m_minutes2, m_minor2, m_major2),
-  col_titles = c("Success (yrs×AI)", "Minutes (yrs×AI)", "Minor (yrs×AI)", "Major (yrs×AI)"),
-  file = "output/tables/pap_secondary_years.tex",
-  coef_mode = "years",
-  controls_desc = "Event×article FE; software; prior AI familiarity."
-)
-
- 
-
- 
-
-# Kaplan–Meier survival curves (time to success)
-survdat <- ind %>% transmute(time = minutes_to_success_i,
-                             status = as.integer(reproduction_i==1),
-                             treatment = factor(ifelse(treatment==1, "ChatGPT+", "Control"),
-                                                levels = c("Control","ChatGPT+")))
-fit <- survfit(Surv(time, status) ~ treatment, data = survdat)
-g <- ggsurvfit(fit) +
-  labs(x = "Minutes", y = "Survival (not yet reproduced)", color = "Arm",
-       title = "Time to reproduction: Kaplan–Meier by arm") +
-  theme_minimal(base_size = 13)
-ggsave("output/figures/pap_km_success.pdf", g, width = 7, height = 4)
-
-# Log-rank test
-if (length(unique(survdat$treatment)) >= 2) {
-  lr <- survdiff(Surv(time, status) ~ treatment, data = survdat)
-  p_lr <- 1 - pchisq(lr$chisq, df = length(lr$n) - 1)
-  writeLines(sprintf("Log-rank chi2 = %.3f, df = %d, p = %.4f", lr$chisq, length(lr$n)-1, p_lr),
-             con = "output/tables/pap_km_logrank.txt")
-} else {
-  writeLines("Log-rank test unavailable (only one arm present).", con = "output/tables/pap_km_logrank.txt")
-}

@@ -15,8 +15,6 @@ games:
   - Sheffield
   - Cornell
   - Bogota
-prompts_intensity_mean: 8
-prompts_intensity_sd: 3
 error_minor_rate: 0.4
 error_major_rate: 0.2
 reproduction_base_prob: 0.45

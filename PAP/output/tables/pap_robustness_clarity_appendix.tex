@@ -1,54 +1,42 @@
 \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
-\begin{tabular}{l*{2}{c}}
+\begin{tabular}{l*{4}{c}}
 \hline\hline
- & (1) & (2)
+ & (1) & (2) & (3) & (4)
 \\
- & At least 1 check & At least 2 checks
+ & At least 1 check & At least 2 checks & Implemented ≥1 & Implemented ≥2
  \\
 \hline
-AI-Assisted & -0.073 &  0.104
+AI-Assisted & -0.044 &  0.120 & -0.002 &  0.144**
 \\
- & ( 0.086) & ( 0.088)
+ & ( 0.128) & ( 0.090) & ( 0.115) & ( 0.063)
 \\
- & [-0.251;  0.104] & [-0.078;  0.285]
+ & [-0.296;  0.208] & [-0.057;  0.296] & [-0.229;  0.224] & [ 0.021;  0.268]
 \\
-AI × Master's &  0.402** &  0.012
+AI × Graduate &  0.126 & -0.066 &  0.149 & -0.034
 \\
- & ( 0.189) & ( 0.180)
+ & ( 0.154) & ( 0.115) & ( 0.137) & ( 0.089)
 \\
- & [ 0.011;  0.794] & [-0.360;  0.384]
+ & [-0.178;  0.429] & [-0.293;  0.161] & [-0.120;  0.418] & [-0.210;  0.142]
 \\
-AI × PhD &  0.388** & -0.109
+AI × Professor/Researcher &  0.280* & -0.008 &  0.208 & -0.128
 \\
- & ( 0.158) & ( 0.133)
+ & ( 0.164) & ( 0.121) & ( 0.151) & ( 0.091)
 \\
- & [ 0.061;  0.715] & [-0.385;  0.166]
-\\
-AI × Postdoc &  0.157 &  0.051
-\\
- & ( 0.175) & ( 0.135)
-\\
- & [-0.206;  0.520] & [-0.229;  0.332]
-\\
-AI × Professor &  0.238 & -0.115
-\\
- & ( 0.156) & ( 0.150)
-\\
- & [-0.085;  0.561] & [-0.425;  0.195]
+ & [-0.044;  0.603] & [-0.247;  0.230] & [-0.090;  0.506] & [-0.306;  0.051]
 \\
 \hline
-Controls & $\checkmark$ & $\checkmark$
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$
 \\
-Mean of dep. var &  0.410 &  0.157
+Mean of dep. var &  0.360 &  0.170 &  0.254 &  0.110
 \\
-p-val (Monotonic compression) &  0.690 &  0.886
+p-val (Monotonic compression) &  0.264 &  0.831 &  0.318 &  0.896
 \\
-Obs. & 261 & 261
+Obs. & 264 & 264 & 264 & 264
 \\
 \hline
 \hline\hline
-\multicolumn{3}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
-\multicolumn{3}{l}{Controls: No event $\times$ article FE; years of coding; software; prior AI familiarity.}\\
-\multicolumn{3}{l}{Compression (monotonic): one-sided p-value for increasing effects across tiers (baseline: Undergraduate).}\\
-\multicolumn{3}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\multicolumn{5}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{5}{l}{Controls: No event×article FE; years of coding; software; prior AI familiarity.}\\
+\multicolumn{5}{l}{Compression (monotonic): one-sided p-value for increasing effects across the three tiers (baseline: Undergraduate).}\\
+\multicolumn{5}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
 \end{tabular}

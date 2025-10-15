@@ -1,12 +1,12 @@
 AI Vertical (Synthetic Individual-Level) — Analysis Pipeline
 
-This project implements an individual‑level analysis pipeline aligned with the PAP “Reproducing with AI Across the Expertise Ladder.” The revised PAP now randomizes within either five expertise tiers or a collapsed three-tier grouping (undergraduate, graduate student, professor/researcher) when counts call for coarser cells. The unit of observation is the individual. We simulate individual data and analyze treatment effects of ChatGPT+ on outcomes and gaps across expertise tiers; all outputs, tables, and figures are computed at the individual level. X‑axis labels for event‑indexed figures now use generic “Game 1–5” ticks to reflect the five‑game design in the PAP. The repository also houses the accompanying paper inventory, pre‑event training materials, and focus‑group assets referenced in the study protocol. Because the study is still in its pre-analysis stage, all analysis scripts, synthetic data, and mock outputs live inside the `PAP/` workspace; the replication package and observed data will be migrated to the repository root after collection. This repository is registered on the Open Science Framework (OSF) at https://osf.io/dkfzt/.
+This project implements an individual‑level analysis pipeline aligned with the PAP “Reproducing with AI Across the Expertise Ladder.” The revised PAP randomizes within a three-tier grouping (undergraduate, graduate student, professor/researcher). The unit of observation is the individual. We simulate individual data and analyze treatment effects of ChatGPT+ on outcomes and gaps across expertise tiers; all outputs, tables, and figures are computed at the individual level. X‑axis labels for event‑indexed figures now use generic “Game 1–5” ticks to reflect the five‑game design in the PAP. The repository also houses the accompanying paper inventory, pre‑event training materials, and focus‑group assets referenced in the study protocol. Because the study is still in its pre-analysis stage, all analysis scripts, synthetic data, and mock outputs live inside the `PAP/` workspace; the replication package and observed data will be migrated to the repository root after collection. This repository is registered on the Open Science Framework (OSF) at https://osf.io/dkfzt/.
 
 
 ## Overview
-- Purpose: Implement PAP-specified analyses for individual participants (no teams), covering both the five-tier ladder and the three-tier collapsed grouping now documented in the PAP.
+- Purpose: Implement PAP-specified analyses for individual participants (no teams), covering the preregistered three-tier grouping now documented in the PAP.
 - Data model: Individuals are simulated across events, tiers, and software; analyses use these individual records directly.
-- Reproducibility: A single master script orchestrates all steps; configuration lives in `config/config.yml` for easy tuning. Usage-intensity variables rely on inverse hyperbolic sine (`asinh`) transforms of self-reported prompt/file/image/word counts, avoiding `log(1+x)` adjustments.
+- Reproducibility: A single master script orchestrates all steps; configuration lives in `config/config.yml` for easy tuning and mirrors the preregistered estimands.
 - Supporting assets: The repo includes the locked PAP sources plus shared materials for task inventory, pre-event training, and post-pilot focus groups.
 - Current status: No observed data are stored yet—`PAP/data/` holds synthetic placeholders so the pipeline can knit tables/figures ahead of fieldwork; the eventual replication files will replace these artefacts once collection is complete.
 
@@ -37,16 +37,15 @@ This project implements an individual‑level analysis pipeline aligned with the
 - `PAP/code/R code/`
   - `master.R`: Orchestrates the pipeline and logging.
   - `cleaning.R`: Simulates individual‑level data and saves `AI individuals.rds`.
-  - `prompt distribution.R`: Densities of prompts/files/images/words (AI arm, individual-level).
   - `text figures.R`: Word frequency “cloud” and Markov heatmaps from `data/corpus`.
-  - `pap_analyses.R`: Main and secondary regressions specified in the PAP, plus KM plot (usage regressions use `asinh` transforms).
+  - `pap_analyses.R`: Main and secondary regressions specified in the PAP, plus supporting figures/tables.
 - `PAP/R/`
   - `simulate_individuals.R`: Synthetic individual generator (and legacy aggregation helpers, unused by default).
   - `reproduction rates.R`: Generates reproduction and error figures used as mock‑ups in the PAP.
 - `PAP/config/`
   - `config.yml`: Parameters that govern the simulation and labeling.
 - `PAP/data/`
-  - `AI individuals.rds`: Generated individual‑level dataset used by all analyses (usage metrics stored as raw counts; transforms applied downstream).
+  - `AI individuals.rds`: Generated individual‑level dataset used by all analyses.
   - `corpus/`: Optional `.txt` files used to build text‑based figures.
 - `PAP/output/`
   - `figures/`: Generated figures (PDF/PNG).
@@ -64,7 +63,6 @@ This project implements an individual‑level analysis pipeline aligned with the
 
 Notes
 - The master script uses `pacman::p_load(...)` to install/load required packages automatically if missing.
-- Self-reported AI-usage counts (prompts/files/images/words) are transformed downstream with `asinh` before any modeling; no usage logs are audited in this simulation.
 - If you prefer, open an interactive R session and pre‑install packages listed under “Dependencies”.
 
 
@@ -107,8 +105,7 @@ Core R packages (loaded via `pacman::p_load` in `master.R`):
 - Project utilities: `here`, `yaml`, `glue`
 - Data wrangling: `dplyr`, `tidyr`, `stringr`, `forcats`, `janitor`, `lubridate`, `tibble`, `purrr`
 - Modeling & stats: `fixest`, `sandwich`, `lmtest`, `car`, `margins`, `multcomp`, `broom`
-- Tables & reporting: `kableExtra`, `modelsummary`, `xtable`
-- Survival (RMST compatibility): `ggsurvfit`, `survRM2`
+- Tables & reporting: `kableExtra`, `xtable`
 - Visualization: `ggplot2`, `patchwork`
 
 The scripts will run with a recent R (≥ 4.2 recommended) and recent package versions. Some ggplot2 warnings about removed rows (due to missing values at aggregation) are expected and harmless.
@@ -118,9 +115,7 @@ The scripts will run with a recent R (≥ 4.2 recommended) and recent package ve
 Key parameters you can tune:
 - `seed`: RNG seed for reproducibility.
 - Categorical levels: `softwares`, `skills`, `gpt_levels`, `coding_levels`, `games`, and simulated tiers.
-- Prompt intensity: `prompts_intensity_mean`, `prompts_intensity_sd` (drives prompts/files/images/words at the individual level).
 - Error and reproduction process: `error_minor_rate`, `error_major_rate`, `reproduction_base_prob`, compression parameters.
-- Time modeling (minutes): `start_time_mean`, `start_time_sd` for minutes‑to‑success and related timing.
 
 Edit `config.yml` to change data characteristics, then re‑run the master script.
 
@@ -135,17 +130,15 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
 ## Data Flow
 1. Simulation (`cleaning.R` + `R/simulate_individuals.R`)
    - Simulates individual records across events, tiers, and software.
-   - Outcomes: prompts/files/images/words (self-reported counts later transformed with `asinh`), success in reproduction, minor/major errors, minutes‑to‑success (censored), robustness and clarity.
+   - Outcomes: reproduction success, minor and major coding errors, referee assessments (appropriateness/overall), robustness-check indicators (planned and implemented), and clarity scores.
    - Once observed data arrive, this synthetic generator will be replaced with the cleaned participant-level dataset and corresponding preprocessing scripts.
 
 2. Figures and tables
-   - Prompt Distribution (`prompt distribution.R`): densities for prompts/files/images/words (AI arm, individual-level).
    - Text Figures (`text figures.R`): top word bar chart; word/bigram transition heatmaps (uses `data/corpus`).
    - PAP Analyses (`pap_analyses.R`):
-    - OLS (success, minutes) and Poisson (minor/major) with event×article FE; SEs clustered by event×software.
+    - Linear probability models for binary outcomes and Poisson models for counts, all with event×article fixed effects and HC3 heteroskedasticity-robust SEs.
      - Years-of-coding interaction (linear main; quadratic appendix).
-     - Within-AI usage models (prompts/files/images/words), including tier-split appendices.
-     - Kaplan–Meier survival plot and log‑rank summary.
+     - Learning checks (treatment × event order).
 
 3. Logging (paths relative to `PAP/`)
    - R log: `output/master_log_R.log`.
@@ -156,12 +149,10 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
 - All paths below are relative to `PAP/` during the PAP stage.
 - Figures (`output/figures/`):
   - `reproduction rates (raw).pdf`, `major errors (raw).pdf`, `minor errors (raw).pdf` (levels, by branch)
-  - `prompt distribution.pdf`
   - `wordcloud_focus_groups.png`, `markov_words_focus_groups.png`, `markov_bigrams_focus_groups.png`
-  - `pap_km_success.pdf`
 - Tables (`output/tables/`):
-  - `pap_main.tex`, `pap_secondary_years.tex`, `pap_secondary_years_alt.tex`, `pap_secondary_learning.tex`
-  - `pap_secondary_usage_all.tex`, `pap_usage_success_by_tier.tex`, `pap_usage_minutes_by_tier.tex`
+  - `pap_coding.tex`, `pap_coding_horizontal.tex`, `pap_coding_years_core.tex`
+  - `pap_noncoding.tex`, `pap_noncoding_horizontal.tex`, `pap_noncoding_years.tex`
   - `pap_robustness_clarity.tex`, `pap_robustness_clarity_appendix.tex`, `pap_robustness_clarity_both.tex`
 - Logs: `master_log_R.log`, `master_log_stata.log` (placeholder)
 
@@ -199,22 +190,3 @@ These PNGs render directly in most viewers; PDF figures are in `PAP/output/figur
 ## Provenance
 - This project implements an individual‑level PAP. Earlier references to team-level outputs have been removed.
 - X‑axis labels on event‑indexed figures updated to generic “Game 1–5” to match the preregistered scope.
-
-## PAP Outputs Index
-
-Main tables (PAP):
-- `PAP/output/tables/pap_main.tex`: OLS (success, minutes) and Poisson (minor/major) with FE and clustered SEs.
-- `PAP/output/tables/pap_secondary_years.tex`: Linear dose-response (years of coding × treatment).
-- `PAP/output/tables/pap_secondary_learning.tex`: Learning (treatment × event order).
-
-Secondary and appendix:
-- `PAP/output/tables/pap_secondary_usage_all.tex`: Within-AI usage regressions including prompts, files, images, words (asinh transforms).
-- `PAP/output/tables/pap_usage_success_by_tier.tex`: Within-AI usage → success, separate models per tier (asinh transforms).
-- `PAP/output/tables/pap_usage_minutes_by_tier.tex`: Within-AI usage → minutes, separate models per tier (asinh transforms).
-- `PAP/output/tables/pap_robustness_clarity.tex`: Robustness and clarity outcomes (with FE).
-- `PAP/output/tables/pap_robustness_clarity_appendix.tex`: Robustness and clarity (no FE) specification check.
-- `PAP/output/tables/pap_robustness_clarity_both.tex`: Combined table with FE and no-FE columns side-by-side.
-- `PAP/output/tables/pap_secondary_years_alt.tex`: Years of coding with quadratic term (appendix).
-
-Figures (PAP):
-- `PAP/output/figures/pap_km_success.pdf`: Kaplan–Meier survival by treatment (minutes to success).

@@ -9,7 +9,7 @@ pacman::p_load(
   here, yaml, dplyr, stringr, tidyr, forcats, janitor, lubridate,
   fixest, purrr, broom, tibble, car, margins,
   sandwich, lmtest, multcomp, kableExtra,
-  ggplot2, patchwork, modelsummary, ggsurvfit, survRM2, xtable, glue
+  ggplot2, patchwork, xtable, glue
 )
 
 # logging
@@ -24,10 +24,6 @@ source(here::here("code","R code","cleaning.R"))
 rm(list = ls())
 
 # 2. Individual-level figures
-cat("\n--- Figures: Prompt usage distributions (AI arm) ---\n")
-source(here::here("code","R code","prompt distribution.R"))
-rm(list = ls())
-
 cat("\n--- Figures: Text corpus visualizations ---\n")
 source(here::here("code","R code","text figures.R"))
 rm(list = ls())

@@ -1,0 +1,42 @@
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{3}{c}}
+\hline\hline
+ & (1) & (2) & (3)
+\\
+ & Reproduction & Minor errors & Major errors
+ \\
+\hline
+AI-Assisted &  0.187 & -0.071 &  1.132*
+\\
+ & ( 0.119) & ( 0.465) & ( 0.658)
+\\
+ & [-0.047;  0.421] & [-0.982;  0.840] & [-0.158;  2.422]
+\\
+AI × Graduate & -0.170 &  0.186 & -1.879*
+\\
+ & ( 0.152) & ( 0.590) & ( 1.003)
+\\
+ & [-0.470;  0.130] & [-0.971;  1.343] & [-3.844;  0.087]
+\\
+AI × Professor/Researcher &  0.032 &  0.259 & -1.462*
+\\
+ & ( 0.160) & ( 0.569) & ( 0.810)
+\\
+ & [-0.283;  0.346] & [-0.856;  1.374] & [-3.049;  0.124]
+\\
+\hline
+Controls & $\checkmark$ & $\checkmark$ & $\checkmark$
+\\
+Mean of dep. var &  0.485 &  0.356 &  0.159
+\\
+p-val (Monotonic compression) &  0.918 &  0.436 &  0.975
+\\
+Obs. & 264 & 264 & 264
+\\
+\hline
+\hline\hline
+\multicolumn{4}{l}{\it{Note:} Standard errors in parentheses; confidence intervals in brackets.}\\
+\multicolumn{4}{l}{Controls: Event×article FE; years of coding; software; prior AI familiarity.}\\
+\multicolumn{4}{l}{Compression (monotonic): one-sided p-value for increasing effects across the three tiers (baseline: Undergraduate).}\\
+\multicolumn{4}{l}{\sym{*} $p<0.10$, \sym{**} $p<0.05$,  \sym{***} $p<0.01$}\\
+\end{tabular}
