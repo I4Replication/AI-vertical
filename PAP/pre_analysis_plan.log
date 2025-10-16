@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  15 OCT 2025 21:29
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2024.2.15)  15 OCT 2025 21:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1081,7 +1081,7 @@ Missing character: There is no ≥ (U+2265) in font [lmroman8-regular]:mapping=t
 x-text;!
 [13]
 LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10.95> not available
-(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 1125.
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 1124.
 [14]
 Missing character: There is no ≥ (U+2265) in font [lmroman8-regular]:mapping=te
 x-text;!
