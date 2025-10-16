@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:D23"/>
+  <sheetViews>
+    <sheetView workbookViewId="0">
+      <selection activeCell="A1" sqref="A1"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr defaultRowHeight="15"/>
+  <cols>
+    <col min="1" max="1" width="30" customWidth="1"/>
+    <col min="2" max="2" width="45" customWidth="1"/>
+    <col min="3" max="3" width="22" customWidth="1"/>
+    <col min="4" max="4" width="60" customWidth="1"/>
+  </cols>
+  <sheetData>
+    <row r="1">
+      <c r="A1" t="inlineStr"><is><t>Referee Report (PAP rubric)</t></is></c>
+    </row>
+    <row r="2"/>
+    <row r="3">
+      <c r="A3" t="inlineStr"><is><t>Dimension</t></is></c>
+      <c r="B3" t="inlineStr"><is><t>Type</t></is></c>
+      <c r="C3" t="inlineStr"><is><t>Score or Value</t></is></c>
+      <c r="D3" t="inlineStr"><is><t>Justification</t></is></c>
+    </row>
+    <row r="4">
+      <c r="A4" t="inlineStr"><is><t>Appropriateness</t></is></c>
+      <c r="B4" t="inlineStr"><is><t>Binary: Appropriate/Not appropriate</t></is></c>
+    </row>
+    <row r="5">
+      <c r="A5" t="inlineStr"><is><t>Summary accuracy</t></is></c>
+      <c r="B5" t="inlineStr"><is><t>0-5</t></is></c>
+    </row>
+    <row r="6">
+      <c r="A6" t="inlineStr"><is><t>Literature placement</t></is></c>
+      <c r="B6" t="inlineStr"><is><t>0-5</t></is></c>
+    </row>
+    <row r="7">
+      <c r="A7" t="inlineStr"><is><t>Weakness diagnosis</t></is></c>
+      <c r="B7" t="inlineStr"><is><t>0-5</t></is></c>
+    </row>
+    <row r="8">
+      <c r="A8" t="inlineStr"><is><t>Recommendations</t></is></c>
+      <c r="B8" t="inlineStr"><is><t>0-5</t></is></c>
+    </row>
+    <row r="9">
+      <c r="A9" t="inlineStr"><is><t>Clarity</t></is></c>
+      <c r="B9" t="inlineStr"><is><t>0-5</t></is></c>
+    </row>
+    <row r="10">
+      <c r="A10" t="inlineStr"><is><t>Overall</t></is></c>
+      <c r="B10" t="inlineStr"><is><t>0-5</t></is></c>
+    </row>
+    <row r="11"/>
+    <row r="12">
+      <c r="A12" t="inlineStr"><is><t>Justifications (2-4 sentences each)</t></is></c>
+    </row>
+    <row r="13">
+      <c r="A13" t="inlineStr"><is><t>Section</t></is></c>
+      <c r="B13" t="inlineStr"><is><t>What to cover</t></is></c>
+      <c r="C13" t="inlineStr"><is><t>Tip</t></is></c>
+    </row>
+    <row r="14">
+      <c r="A14" t="inlineStr"><is><t>Summary</t></is></c>
+      <c r="B14" t="inlineStr"><is><t>Question, setting, methods, main results.</t></is></c>
+      <c r="C14" t="inlineStr"><is><t>Keep it factual and brief.</t></is></c>
+    </row>
+    <row r="15">
+      <c r="A15" t="inlineStr"><is><t>Narrative scope (≤ 1,000 words)</t></is></c>
+      <c r="B15" t="inlineStr"><is><t>Stay under 1,000 words; fold data/code or reproducibility blockers into the summary or recommendations.</t></is></c>
+      <c r="C15" t="inlineStr"><is><t>No standalone code-quality sections.</t></is></c>
+    </row>
+    <row r="16">
+      <c r="A16" t="inlineStr"><is><t>Design and Identification</t></is></c>
+      <c r="B16" t="inlineStr"><is><t>Randomization, balance, attrition, timeline checks.</t></is></c>
+      <c r="C16" t="inlineStr"><is><t>State any concerns.</t></is></c>
+    </row>
+    <row r="17">
+      <c r="A17" t="inlineStr"><is><t>Robustness</t></is></c>
+      <c r="B17" t="inlineStr"><is><t>Two checks, rationale, results vs. main.</t></is></c>
+      <c r="C17" t="inlineStr"><is><t>Summarize both checks succinctly.</t></is></c>
+    </row>
+    <row r="18">
+      <c r="A18" t="inlineStr"><is><t>Ethical and Transparency</t></is></c>
+      <c r="B18" t="inlineStr"><is><t>Consent, preregistration, registry.</t></is></c>
+      <c r="C18" t="inlineStr"><is><t>Include identifiers if available.</t></is></c>
+    </row>
+    <row r="19">
+      <c r="A19" t="inlineStr"><is><t>Overall Assessment</t></is></c>
+      <c r="B19" t="inlineStr"><is><t>Verdict and recommendations to authors/editors.</t></is></c>
+      <c r="C19" t="inlineStr"><is><t>One short paragraph.</t></is></c>
+    </row>
+    <row r="20"/>
+    <row r="21">
+      <c r="A21" t="inlineStr"><is><t>Paste-ready Referee Report (≤ 1,000 words)</t></is></c>
+    </row>
+    <row r="22">
+      <c r="A22" t="inlineStr"><is><t xml:space="preserve">REFEREE REPORT (≤ 1,000 words)
+
+Summary:
+- 
+
+Design and Identification:
+- 
+
+Robustness:
+- 
+
+Ethical and Transparency:
+- 
+
+Overall Assessment:
+- </t></is></c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
+</worksheet>

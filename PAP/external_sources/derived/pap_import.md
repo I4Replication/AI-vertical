@@ -27,8 +27,8 @@ With a planned sample of 300 individuals, roughly 100 per expertise tier, our 10
 # 5. Tasks & Materials
 Computational reproduction of a prespecified result.
 Error detection (classify major versus minor).
-Propose and attempt at least two robustness checks.
-One-page referee report (tbd)
+Complete standardized Excel workbook and post-event SurveyMonkey questionnaire (arm, AI usage perceptions or perceived disadvantage, helpful/missing features, perceived performance impact).
+One-page referee summary captured via workbook narrative fields.
 Materials: PDF, replication package, screenshot, Excel logbook, and ChatGPT transcript template (treatment only). Work window: 7 h (09:00–16:00). Treatment arm completes 1‑h ChatGPT training beforehand.
 # 6. Outcome Variables
 # 7. Covariates
