@@ -46,7 +46,7 @@ _Last updated: 2025-xx-xx (update when deployed)_
 ## Section E — Working Without AI (Human-Only Sessions Only) (10 minutes)
 - **Q8-control**: What strategies did you lean on in the absence of AI tools?
   - *Prompts*: Existing scripts, manuals, peer resources, longer debugging routes.
-- **Q9-control**: How fair did the setup feel compared with teams who had AI access? What would have helped level the playing field?
+- **Q9-control**: How fair did the setup feel compared with participants who had AI access? What would have helped level the playing field?
   - *Prompts*: Additional documentation, reference prompts for manual replication, alternative tools.
 - **Q10-control**: If you had access to an AI assistant, where do you think it would have helped the most—or least?
   - *Prompts*: Specific tasks, time savings, potential risks.

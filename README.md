@@ -130,7 +130,7 @@ Edit `config.yml` to change data characteristics, then re‑run the master scrip
 ## Data Flow
 1. Simulation (`cleaning.R` + `R/simulate_individuals.R`)
    - Simulates individual records across events, tiers, and software.
-   - Outcomes: reproduction success, minor and major coding errors, referee assessments (appropriateness/overall), robustness-check indicators (planned and implemented), and clarity scores.
+   - Outcomes: reproduction success, minor and major coding errors, the standardized Excel workbook fields (referee judgments, robustness proposals/implementation, clarity), and responses to the post-event SurveyMonkey questionnaire (arm perception, self-assessed usage intensity or disadvantage, perceived performance impact, and helpful/missing AI features).
    - Once observed data arrive, this synthetic generator will be replaced with the cleaned participant-level dataset and corresponding preprocessing scripts.
 
 2. Figures and tables

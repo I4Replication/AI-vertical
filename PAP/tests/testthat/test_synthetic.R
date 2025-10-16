@@ -3,17 +3,17 @@ source(here::here("R","simulate_individuals.R"))
 
 cfg <- yaml::read_yaml(here::here("config","config.yml"))
 indiv <- sim_individuals(cfg)
-main  <- aggregate_to_team(indiv)
 
+cols_expected <- c("participant_id","game","branch","software","attendance",
+                   "tier","years_coding","treatment","reproduction_i",
+                   "minor_errors_i","major_errors_i","referee_app_human_i",
+                   "referee_score_human_i","referee_app_ai_i","referee_score_ai_i",
+                   "good_checks_i","two_good_checks_i","implemented_check_1_i",
+                   "implemented_check_2_i")
 
-test_that("individuals have expected columns", {
-  expect_true(all(c("team_id","indiv_id","branch","software","attendance") %in% names(indiv)))
+test_that("participant data have expected columns", {
+  expect_true(all(cols_expected %in% names(indiv)))
+  expect_equal(nrow(indiv), cfg$n_participants)
   expect_true(all(indiv$reproduction_i %in% c(0,1)))
-})
-
-test_that("aggregation yields team-level rows", {
-  expect_true(all(!duplicated(main$team_id)))
-  expect_true(all(main$number_teammates >= cfg$individuals_per_team_min))
-  expect_true(all(main$minor_errors >= 0 & main$major_errors >= 0))
 })
 

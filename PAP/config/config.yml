@@ -1,8 +1,6 @@
 # Configuration for AI vertical synthetic pipeline
 seed: 1234
-n_teams: 60
-individuals_per_team_min: 3
-individuals_per_team_max: 6
+n_participants: 300
 branches: ["Human-Only", "AI-Assisted", "AI-Led"]
 softwares: ["Stata", "R"]
 attendance: ["Virtual", "In-Person"]
