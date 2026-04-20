@@ -1,0 +1,25 @@
+---
+title: "PAP Addendum / Protocol Amendment"
+author: "\\begin{minipage}{0.9\\textwidth}\\centering \\small Ghina Abdul Baki, Juan P. Aparicio, Bruno Barbarioli, Abel Brodeur,\\\\ Lenka Fiala, Derek Mikola, David Valenta \\end{minipage}"
+date: "April 16, 2026"
+output:
+  pdf_document:
+    toc: false
+    number_sections: false
+    fig_caption: false
+    latex_engine: xelatex
+fontsize: 11pt
+geometry: margin=1in
+---
+
+This addendum records pilot-informed amendments to the preregistered pre-analysis plan after the pilot and before the other AI games and access to main-study outcomes. It supersedes the original PAP only on the points listed below; all other provisions remain in force.
+
+1. **Discipline coverage.** The study will now include four disciplines rather than three: Economics, Political Science, Psychology, and Management. Management is a full discipline for recruitment, participant primary-discipline coding, task-discipline coding, and inside- versus outside-discipline assignment and analysis. Any prior PAP language referring to only three disciplines should be read as referring to these four disciplines.
+
+2. **Pre-event distribution of materials.** Each participant will receive a password-protected zip archive containing the assigned paper and full replication package on the day before the event. The password will be released only at check-in or at the official event start time so participants can avoid same-day download failures without receiving early access to the materials. Same-day Dropbox or OSF access will remain available only as a fallback if the archive fails or a participant encounters a file-access problem.
+
+3. **Additional heterogeneity analyses.** The original three-tier grouping remains the primary randomization framework and the primary specification for vertical analyses. In addition, we will estimate secondary heterogeneity analyses using the following mutually exclusive categories: Undergraduate, Master's student, PhD student, Postdoc, and PhD-holding researcher. The ``PhD-holding researcher'' category includes Faculty/Professor and other PhD holders who are not current PhD students and not postdocs. These finer-grained analyses supplement, and do not replace, the preregistered three-tier specification.
+
+4. **Expanded undergraduate eligibility.** Students entering their penultimate undergraduate year in Fall 2026 are eligible to participate. Undergraduates will continue to receive only inside-discipline assignments unless a later amendment explicitly changes that rule.
+
+All PAP terms not explicitly revised by this addendum remain unchanged.
