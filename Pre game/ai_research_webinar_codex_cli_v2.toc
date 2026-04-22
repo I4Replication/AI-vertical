@@ -1,4 +1,4 @@
 \beamer@sectionintoc {1}{Pre-Games Orientation}{4}{0}{1}
-\beamer@sectionintoc {2}{Study design and preparation}{6}{0}{2}
-\beamer@sectionintoc {3}{Event operations}{9}{0}{3}
-\beamer@sectionintoc {4}{AI toolkit}{16}{0}{4}
+\beamer@sectionintoc {2}{Study design and preparation}{5}{0}{2}
+\beamer@sectionintoc {3}{Event operations}{8}{0}{3}
+\beamer@sectionintoc {4}{AI toolkit}{15}{0}{4}
