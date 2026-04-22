@@ -45,4 +45,5 @@ Papers/**/replication\ package/
 Papers/
 
 # Local event workbooks and logistics
-Events/
+Events/*
+!Events/randomization.R
