@@ -42,6 +42,7 @@ rsconnect/
 
 # Replication packages
 Papers/**/replication\ package/
+Papers/
 
 # Local event workbooks and logistics
 Events/
