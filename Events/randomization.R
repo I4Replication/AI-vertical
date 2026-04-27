@@ -19,7 +19,6 @@ if (length(args) == 0 || is.na(seed)) {
 if (is.na(seed)) {
   seed <- 20241009L
 }
-set.seed(seed)
 
 # Resolve the directory that holds this script (the Events folder)
 resolve_events_dir <- function() {
@@ -35,6 +34,16 @@ resolve_events_dir <- function() {
 
 events_dir <- resolve_events_dir()
 repo_dir <- normalizePath(file.path(events_dir, ".."))
+participants_dir <- Sys.getenv("PARTICIPANTS_DIR", unset = file.path(events_dir, "participants list"))
+randomized_dir <- Sys.getenv("RANDOMIZED_DIR", unset = file.path(events_dir, "randomized list"))
+
+if (!dir.exists(participants_dir)) {
+  stop("Could not find participants list folder at ", participants_dir)
+}
+dir.create(randomized_dir, recursive = TRUE, showWarnings = FALSE)
+
+participants_dir <- normalizePath(participants_dir)
+randomized_dir <- normalizePath(randomized_dir)
 
 papers_path <- file.path(repo_dir, "Papers", "papers.xlsx")
 if (!file.exists(papers_path)) {
@@ -46,6 +55,19 @@ normalize_key <- function(x) {
     str_to_lower() |>
     str_replace_all("[^[:alnum:]]+", " ") |>
     str_squish()
+}
+
+stable_event_seed <- function(base_seed, event_name) {
+  key <- paste0(base_seed, "::", normalize_key(event_name))
+  hash <- 0
+  for (value in utf8ToInt(key)) {
+    hash <- (hash * 131 + value) %% 2147483647
+  }
+  event_seed <- as.integer(hash)
+  if (is.na(event_seed) || event_seed <= 0L) {
+    event_seed <- as.integer(base_seed)
+  }
+  event_seed
 }
 
 infer_paper_discipline <- function(journal_raw) {
@@ -86,11 +108,11 @@ discover_local_management_papers <- function(repo_dir) {
 classify_secondary_tier <- function(position_raw) {
   position_clean <- str_to_lower(str_squish(position_raw))
   case_when(
-    str_detect(position_clean, "undergraduate") ~ "Undergraduate",
+    str_detect(position_clean, "undergraduate|4th year|third year|3rd year") ~ "Undergraduate",
     str_detect(position_clean, "master") ~ "Master's student",
     str_detect(position_clean, "phd") ~ "PhD student",
     str_detect(position_clean, "postdoc|post-doctoral|postdoctoral") ~ "Postdoc",
-    str_detect(position_clean, "professor|faculty|researcher|lecturer|scientist|principal investigator") ~ "PhD-holding researcher",
+    str_detect(position_clean, "professor|faculty|researcher|lecturer|scientist|principal investigator|research fellow|research assistant|specialist|engineer|alumni") ~ "PhD-holding researcher",
     TRUE ~ NA_character_
   )
 }
@@ -122,15 +144,15 @@ classify_primary_discipline <- function(discipline_raw) {
   )
   matches <- unique(matches)
 
-  if (length(matches) == 1) {
+  if (length(matches) >= 1) {
     matches[[1]]
   } else {
-    NA_character_
+    "Other/Unsupported"
   }
 }
 
 # Load and tag the paper catalogue ------------------------------------------------
-papers <- read_excel(papers_path, guess_max = 5000) |>
+papers <- read_excel(papers_path, guess_max = 5000, .name_repair = "unique_quiet") |>
   mutate(
     Journal = str_squish(Journal),
     paper_discipline = infer_paper_discipline(Journal),
@@ -141,7 +163,7 @@ papers <- read_excel(papers_path, guess_max = 5000) |>
   select(paper_title, paper_discipline, Journal, paper_url, paper_uid) |>
   bind_rows(discover_local_management_papers(repo_dir)) |>
   mutate(paper_key = normalize_key(paper_title)) |>
-  distinct(paper_uid, .keep_all = TRUE) |>
+  distinct(paper_discipline, paper_key, .keep_all = TRUE) |>
   select(-paper_key)
 
 if (anyNA(papers$paper_discipline)) {
@@ -157,10 +179,12 @@ if (length(missing_disc) > 0) {
 # Helper: draw a single paper given participant discipline and alignment ------------
 draw_paper <- function(primary, alignment, catalogue) {
   stopifnot(alignment %in% c("Inside", "Outside"))
-  if (is.na(primary) || !primary %in% supported_disciplines) {
+  if (is.na(primary)) {
     stop("Unexpected discipline for participant: ", primary)
   }
-  pool <- if (alignment == "Inside") {
+  pool <- if (!primary %in% supported_disciplines) {
+    catalogue
+  } else if (alignment == "Inside") {
     dplyr::filter(catalogue, paper_discipline == primary)
   } else {
     dplyr::filter(catalogue, paper_discipline != primary)
@@ -181,13 +205,23 @@ clean_participants <- function(roster_df) {
     matches[[1]]
   }
 
+  col_after <- function(df, col_name) {
+    idx <- match(col_name, names(df))
+    if (is.na(idx) || idx >= ncol(df)) {
+      return(NA_character_)
+    }
+    names(df)[idx + 1L]
+  }
+
   col_participate <- col_lookup(roster_df, "would you like to participate", "participation question")
   col_email <- col_lookup(roster_df, "what is your email address", "email")
   col_name <- col_lookup(roster_df, "what is your name", "name")
   col_position <- col_lookup(roster_df, "best describes your current position", "position")
   col_discipline <- col_lookup(roster_df, "academic discipline", "discipline")
-  col_response <- col_lookup(roster_df, "^response id$", "response id")
-  col_modified <- col_lookup(roster_df, "date modified", "date modified")
+  col_response <- col_lookup(roster_df, "^(response|respondent) id$", "response id")
+  col_modified <- col_lookup(roster_df, "date modified|end date|submitted date|completion date", "date modified")
+  col_position_other <- col_after(roster_df, col_position)
+  col_discipline_other <- col_after(roster_df, col_discipline)
   col_first <- if (any(str_detect(names(roster_df), regex("^first name$", ignore_case = TRUE)))) {
     col_lookup(roster_df, "^first name$", "first name")
   } else NA_character_
@@ -217,6 +251,22 @@ clean_participants <- function(roster_df) {
       position_raw = str_squish(.data[[col_position]]),
       discipline_raw = str_squish(.data[[col_discipline]])
     ) |>
+    mutate(
+      position_raw = if (!is.na(col_position_other)) {
+        if_else(
+          str_detect(position_raw, regex("^other", ignore_case = TRUE)),
+          coalesce(na_if(str_squish(.data[[col_position_other]]), ""), position_raw),
+          position_raw
+        )
+      } else position_raw,
+      discipline_raw = if (!is.na(col_discipline_other)) {
+        if_else(
+          str_detect(discipline_raw, regex("^other", ignore_case = TRUE)),
+          coalesce(na_if(str_squish(.data[[col_discipline_other]]), ""), discipline_raw),
+          discipline_raw
+        )
+      } else discipline_raw
+    ) |>
     filter(participation_flag) |>
     mutate(dedupe_key = coalesce(email_clean, paste0("response:", response_id))) |>
     group_by(dedupe_key) |>
@@ -238,6 +288,17 @@ clean_participants <- function(roster_df) {
         tier,
         levels = c("Undergraduate", "Graduate", "Professor/Researcher")
       )
+    ) |>
+    select(
+      response_id,
+      participant_name,
+      email_clean,
+      participation_choice,
+      position_raw,
+      discipline_raw,
+      tier_secondary,
+      tier,
+      primary_discipline
     )
 }
 
@@ -269,37 +330,40 @@ assign_alignment_global <- function(df, target_share = 0.30) {
     df$discipline_alignment <- character(0)
     return(df)
   }
-  target_outside <- as.integer(round(n * target_share))
-  eligible_idx <- which(df$tier != "Undergraduate")
-  if (length(eligible_idx) == 0) {
-    df$discipline_alignment <- rep("Inside", n)
-    return(df)
-  }
+  alignment <- rep("Inside", n)
+
+  unsupported_idx <- which(is.na(df$primary_discipline) | !df$primary_discipline %in% supported_disciplines)
+  alignment[unsupported_idx] <- "Outside"
+
+  target_outside <- max(as.integer(round(n * target_share)) - length(unsupported_idx), 0L)
+  eligible_idx <- which(df$tier != "Undergraduate" & df$primary_discipline %in% supported_disciplines)
   max_outside <- length(eligible_idx)
   target_outside <- min(target_outside, max_outside)
   outside_idx <- if (target_outside > 0) sample(eligible_idx, target_outside) else integer(0)
-  alignment <- rep("Inside", n)
   alignment[outside_idx] <- "Outside"
-  alignment[df$tier == "Undergraduate"] <- "Inside"
   df$discipline_alignment <- alignment
   df
 }
 
-# Run randomization for each event workbook ---------------------------------------
-event_files <- list.files(events_dir, pattern = "\\.xlsx$", full.names = TRUE)
+# Run randomization for each participant-list workbook ----------------------------
+event_files <- list.files(participants_dir, pattern = "\\.xlsx$", full.names = TRUE)
 event_files <- event_files[!grepl("~\\$", basename(event_files))]
 event_files <- sort(event_files)
 
 if (length(event_files) == 0) {
-  stop("No event workbooks (.xlsx) found in ", events_dir)
+  stop("No participant workbooks (.xlsx) found in ", participants_dir)
 }
 
 run_timestamp <- format(Sys.time(), tz = "UTC", usetz = TRUE)
 
 for (event_path in event_files) {
-  message("Randomizing assignments for ", basename(event_path))
+  output_path <- file.path(randomized_dir, basename(event_path))
   event_name <- tools::file_path_sans_ext(basename(event_path))
-  roster <- read_excel(event_path, sheet = 1, guess_max = 5000)
+  event_seed <- stable_event_seed(seed, event_name)
+  set.seed(event_seed)
+
+  message("Randomizing assignments for ", basename(event_path), " with event seed ", event_seed)
+  roster <- read_excel(event_path, sheet = 1, guess_max = 5000, .name_repair = "unique_quiet")
   participants <- clean_participants(roster)
 
   if (nrow(participants) == 0) {
@@ -337,7 +401,8 @@ for (event_path in event_files) {
     mutate(
       event = event_name,
       out_of_discipline = if_else(discipline_alignment == "Outside", "Yes", "No"),
-      randomization_seed = seed,
+      randomization_base_seed = seed,
+      randomization_event_seed = event_seed,
       randomization_timestamp_utc = run_timestamp
     ) |>
     select(
@@ -356,29 +421,24 @@ for (event_path in event_files) {
       paper_discipline,
       Journal,
       paper_url,
-      randomization_seed,
+      randomization_base_seed,
+      randomization_event_seed,
       randomization_timestamp_utc
     )
 
-  sheet_base <- paste0("Assignments_", seed)
-  wb <- loadWorkbook(event_path)
-  sheet_name <- sheet_base
-  if (sheet_name %in% names(wb)) {
-    suffix <- format(Sys.time(), "%H%M%S")
-    sheet_name <- substr(paste0(sheet_base, "_", suffix), 1, 31)
-    while (sheet_name %in% names(wb)) {
-      suffix <- sprintf("%s%02d", format(Sys.time(), "%H%M%S"), sample.int(99, 1))
-      sheet_name <- substr(paste0(sheet_base, "_", suffix), 1, 31)
-    }
-  }
-
+  sheet_name <- substr(paste0("Assignments_", event_seed), 1, 31)
+  wb <- createWorkbook()
+  addWorksheet(wb, "Roster")
+  suppressMessages(writeDataTable(wb, sheet = "Roster", x = roster))
+  suppressMessages(setColWidths(wb, sheet = "Roster", cols = 1:ncol(roster), widths = "auto"))
   addWorksheet(wb, sheet_name)
-  writeDataTable(wb, sheet = sheet_name, x = assignments)
-  setColWidths(wb, sheet = sheet_name, cols = 1:ncol(assignments), widths = "auto")
-  saveWorkbook(wb, event_path, overwrite = TRUE)
+  suppressMessages(writeDataTable(wb, sheet = sheet_name, x = assignments))
+  suppressMessages(setColWidths(wb, sheet = sheet_name, cols = 1:ncol(assignments), widths = "auto"))
+  saveWorkbook(wb, output_path, overwrite = TRUE)
 
   message(sprintf(
-    "  -> Added sheet '%s' with %d participants (%d AI, %d Human).",
+    "  -> Saved '%s' with sheet '%s' and %d participants (%d AI, %d Human).",
+    output_path,
     sheet_name,
     nrow(assignments),
     sum(assignments$treatment_arm == "AI-Assisted"),
